@@ -1,0 +1,253 @@
+body{
+
+  font-size: 170% !important;
+
+
+    height:100%;  
+  background: url(../img/background.jpg) no-repeat center center fixed; /*put img in body so that it wnot slide with carousel */
+  -webkit-background-size: cover; /*so img covers screen*/
+  -moz-background-size: cover;/*so img covers screen*/
+  -o-background-size: cover;/*so img covers screen*/
+  background-size: cover;/*so img covers screen*/
+}
+
+
+.panelHeader{
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+hr{
+    border: 1px solid #FFFFFF;
+}
+
+h1{
+	font-size: 300% !important;
+	text-transform: uppercase;
+}
+h2{
+    font-size: 200% !important;
+    text-transform: uppercase;
+}
+h3{
+    font-size: 175% !important;
+    text-transform: uppercase;
+}
+
+h4{
+    font-size: 160% !important;
+    
+}
+
+.bg-light-gray {
+    background-color: #f7f7f7;
+}
+
+.bg-light-red {
+    background-color: #E27070
+;
+}
+.startText {
+	color: white;
+	font-weight: bold;
+}
+.bg-dark-blue {
+	background-color: #0000B2
+;
+}
+.belowNav{
+	padding-bottom: 15px;
+}
+
+.table td {
+   text-align: center;   
+}
+
+/*
+.navbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+	
+}
+
+ul.navbar li {
+    display: inline;
+}*/
+.container-wide {
+	padding-left: 50px;
+	padding-right: 50px;
+}
+
+.container-medium {
+    padding-left: 5vw;
+    padding-right: 5vw;
+}
+
+.container-small {
+    padding-left: 3vw;
+    padding-right: 3vw;
+}
+
+section {
+    padding-top: 25px;
+	padding-bottom: 25px;
+	padding-right: 0;
+	padding-left: 0;
+
+}
+
+article {
+	padding: 20px 30px;
+}
+
+.titleSection{
+	padding: 25px 0;
+	 background-color: #f7f7f7;
+}
+
+.smallContainer{
+	margin-left:50px;
+	margin-right:50px
+}
+
+header {
+    text-align: center;
+    color: white;
+	
+    background-attachment: scroll;
+    background-image: url(../img/trading.jpg);
+    background-position: center center;
+    background-repeat: none;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+	vertical-align: middle;
+    -o-background-size: cover;
+}
+
+.indexText{
+text-align: center;
+font-size:50px;
+}
+
+.textcenter{
+text-align: center;
+
+}
+
+.rightAlign{
+text-overflow: ellipsis;
+
+}
+
+tr.spaceUnder > td
+{
+  padding-bottom: 1em;
+}
+
+.rightStick{
+  /*position fixed means it wont move when scrolling but you HAVE to specify top/right/left etc whenever position=fixed
+  , if top =260 it means its 260px from top of screen no matter what
+    thats why its fixed.
+  */
+    /*position:fixed;
+    right:250px;
+    top:65px;*/
+    width: 600px;
+    overflow-y:scroll;/*so you can scroll the div*/
+    height:800px;/*without height you cant scroll it */
+    background: white;
+    padding: 15px;
+}
+
+
+
+.poster {
+  background-size:100% 100%;
+}
+
+.poster img {
+    display: block;
+    width: 100%;
+    max-width: 450px; /* corresponds to max height of 450px */
+}
+
+
+
+.screenshots img {
+    width: 100%;
+    max-width: 550px; /* corresponds to max height of 450px */
+}
+
+.rotten p {
+  font-size: 16px;
+}
+
+ #sidebar.affix-top {
+    position: static;
+    margin-top:30px;
+  }
+  
+  #sidebar.affix {
+    position: fixed;
+
+  }
+
+  .affix-top,.affix{
+  position: static;
+}
+
+
+
+
+    .thumb {
+  margin-bottom: 30px;
+  height : 370px;
+   max-height: 370px;
+}
+
+
+
+.thumb img {
+width: 90%;
+  height : 370px;
+  max-height: 370px;
+    overflow-y: hidden;
+}
+
+
+/*5 columns*/
+.col-xs-15,
+.col-sm-15,
+.col-md-15,
+.col-lg-15 {
+    position: relative;
+    min-height: 1px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.col-xs-15 {
+    width: 20%;
+    float: left;
+}
+/*width 20% so there will be 5 columns*/
+@media (min-width: 768px) {
+.col-sm-15 {
+        width: 20%;
+        float: left;
+    }
+}
+@media (min-width: 992px) {
+    .col-md-15 {
+        width: 20%;
+        float: left;
+    }
+}
+@media (min-width: 1200px) {
+    .col-lg-15 {
+        width: 20%;
+        float: left;
+    }
+}
