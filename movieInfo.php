@@ -1,42 +1,47 @@
-
-<html>
-<?php require('includes/head.php');
+<?php 
 require('includes/connect.php');
-require('includes/navbar.php');
 require('includes/string.php');
 require("includes/chartData.php");
+require("includes/generateDataLayer.php");
 
 $unwantedChars = array(',', '!', '?', "'", " ", ":", "+");
 
-$movieId = $_GET['movieId'];
-echo $movieId;
+$movieId = mysqli_real_escape_string($conn,$_GET['movieId']);
+//echo $movieId;
+//$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '$movieId'";
 
-
-$movieInfoQuery = "SELECT * FROM `movieinfo` WHERE movieId = '".$movieId."'";
-$movieInfoResult = mysqli_query($conn, $movieInfoQuery);
+$movieInfoQuery = "SELECT t.*,d.*,l.*,n.*,i.*,a.* FROM `movieinfo` AS i INNER JOIN `tomato` as t on i.movieId=t.movieId INNER JOIN `imdb` as d on i.movieId=d.movieId INNER JOIN `links` as l on i.movieId=l.movieId INNER JOIN `moviename` as n on i.movieId=n.movieId INNER JOIN `averagerating` as a on i.movieId=a.movieId WHERE i.movieId='$movieId'";
+$movieInfoResult = mysqli_query($conn, $movieInfoQuery) or die(mysqli_error($conn)); 
 $movieInfoRow = mysqli_fetch_array($movieInfoResult);
 
-$tomatoQuery = "SELECT * FROM `tomato` WHERE movieId = '".$movieId."'";
-$tomatoResult = mysqli_query($conn, $tomatoQuery);
-$tomatoRow = mysqli_fetch_array($tomatoResult);
+$dataLayer = generateDataLayerMovie($movieInfoRow);
 
 
-$imdbQuery = "SELECT * FROM `imdb` WHERE movieId = '".$movieId."'";
-$imdbResult = mysqli_query($conn, $imdbQuery);
-$imdbRow = mysqli_fetch_array($imdbResult);
-
-$linkQuery = "SELECT * FROM `links` WHERE movieId = '".$movieId."'";
-$linkResult = mysqli_query($conn, $linkQuery);
-$linkRow = mysqli_fetch_array($linkResult);
-
-$nameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$movieId."'";
-$nameResult = mysqli_query($conn, $nameQuery);
-$nameRow = mysqli_fetch_array($nameResult);
-
+mysqli_data_seek($movieInfoResult,0);
 ?>
 
-<body>
 
+<!DOCTYPE html>
+<html>
+<?php require('includes/head.php'); ?>
+<body >
+
+<script type="text/javascript">
+//datalayer information- just make php list variable and use it here
+
+dataLayer = <?php echo $dataLayer; ?>;
+
+</script>
+
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K4D47X"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K4D47X');</script>
+<!-- End Google Tag Manager -->
 
 
 
@@ -47,284 +52,259 @@ $nameRow = mysqli_fetch_array($nameResult);
 		
 
 
-
-<div id = "background" class = "container-small" style="margin-bottom:45px;" >
-<section id = "" class = "">	
-
-	<article>	
-	<!--<div class = "jumbotron">
-		<h1>ad</h1>
-	</div>-->
-
-
-	<div class="btn-group" role="group" aria-label="...">
-	   <a href = "<?php echo $linkRow['imdbLink'];?>" class="btn btn-primary btn-lg">IMDb</a>
-	   <a href = "<?php echo $linkRow['tmdbLink'];?>" class="btn btn-primary btn-lg">The movie db</a>
-	 <a href = "<?php echo $linkRow['tomatoLink'];?>" class="btn btn-primary btn-lg">Rotten Tomatoes</a>
-	 <a href = "<?php echo $linkRow['subtitleLink']?>" class="btn btn-primary btn-lg">Subtitles</a>
-	</div>
+<?php require('includes/navbar.php'); ?>
+<div id = "" style="margin-bottom:45px;" >
 	
-	
+<div id="wrapper" style = "padding-left: 300px;">
 
-	
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper" style = "width: 300px; padding-left: 15px;">
+            <ul class="sidebar-nav">
+            	<br>
+                <h3><?php echo $movieInfoRow['name']; ?></h3>
+                <div class= "poster"><img src="<?php 
+        		$filename = 'poster/'.normalize($movieId).'.jpg';
+        		if(file_exists($filename)){
+        			echo $filename;
+        		}
+        		?>
+        		" alt = "<?php echo $movieInfoRow['name']; ?>" class="img-thumbnail"></div>
+                <li>
+                    <a href="#trends" onclick= "infoCategoryEvent('trends')" role="tab" data-toggle="tab">Trends <span class="glyphicon glyphicon-play"></span></a>
+                </li>
+                <li>
+                    <a href="#general" onclick= "infoCategoryEvent('general')" role="tab" data-toggle="tab">General information <span class="glyphicon glyphicon-play"></span></a>
+                </li>
+                <li>
+                    <a href="#social" onclick= "infoCategoryEvent('socialMedia')" role="tab" data-toggle="tab">Social media <span class="glyphicon glyphicon-play"></span></a>
+                </li>
+                <br><br>
+                <li class="sidebar-brand">
+                    <a href="#">
+                       Links
+                    </a>
+                </li>
+                <li>
+                    <a id = "imdb" onclick="linkEvent(this.id)"  href="<?php echo $movieInfoRow['imdbLink'];?>" >IMDB</a>
+                </li>
+                <li>
+                    <a id = "tmdb" onclick="linkEvent(this.id)"href="<?php echo $movieInfoRow['tmdbLink'];?>" >The movie database</a>
+                </li>
+                <li>
+                    <a id = "rottenTomatoes" onclick="linkEvent(this.id)" href="<?php echo $movieInfoRow['tomatoLink'];?>" >Rotten tomatoes</a>
+                </li>
+                <li>
+                    <a id = "subtitle" onclick="linkEvent(this.id)" href="<?php echo $movieInfoRow['subtitleLink'];?>">Download subtitles</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /#sidebar-wrapper -->
 
+        <!-- Page Content -->
+        
+            	<section class = "bg-white" style = "padding-left:20px; padding-right:10px" >
+            		<div class="row">
+            			<div class="col-lg-12">
+	            		<div class="tab-content">
+	            		<br><br>
+	            		<div role="tabpanel" class="tab-pane fade" id="trends">
+	            			<div class = "row">
+	            				<div class = "col-xs-6">
+	            					<div class = "row" style = "padding-left:20px">
+	            						<h4>Interest over time (past 12 months)</h4>
+	            						<script type="text/javascript"
+										src="//www.google.co.in/trends/embed.js?hl=en-US&content=1&export=5&q=<?php echo $movieInfoRow['name'];?>&date=today%2012-m&w=600&h=400&cid=TIMESERIES_GRAPH_0">
+										</script>
+	            					</div>
+	            					<div class = "row" style = "padding-left:20px">
+	            						<h4>Related searches</h4>
+	            						<div class = "col-xs-6">
+	            							<script type="text/javascript"
+											src="//www.google.co.in/trends/embed.js?hl=en-US&content=1&export=5&q=<?php echo $movieInfoRow['name'];?>&date=today%2012-m&w=350&h=400&cid=TOP_QUERIES_0_0 ">
+											</script>
+											</script>
+	            						</div>
+	            						<div class = "col-xs-6">
+	            							<script type="text/javascript"
+											src="//www.google.co.in/trends/embed.js?hl=en-US&content=1&export=5&q=<?php echo $movieInfoRow['name'];?>&date=today%2012-m&w=350&h=400&cid=TOP_ENTITIES_0_0 ">
+											</script>
+											</script>
+	            						</div>
+	            					</div>
+	            				</div>
+	            				<div class = "col-xs-6">
+	            					<h4>Regional interest</h4>
+	            					<script type="text/javascript"
+								src="//www.google.co.in/trends/embed.js?hl=en-US&content=1&export=5&q=<?php echo $movieInfoRow['name'];?>&date=today%2012-m&w=700&h=400&cid=GEO_MAP_0_0">
+								</script>
+								<script type="text/javascript"
+								src="//www.google.co.in/trends/embed.js?hl=en-US&content=1&export=5&q=<?php echo $movieInfoRow['name'];?>&date=today%2012-m&w=700&h=400&cid=GEO_TABLE_0_0">
+								</script>
+	            				</div>
+	            			</div>
+	            		</div>
 
-	<div class = "row">
-
-	<!--change to 11 or less whens ad-->
-	<div class = "col-xs-12">
-	<div class="jumbotron">
-
-
-		<!--main row excluding ads-->
-		<div class = "row">
-			<!--movie info excluding twitter feed-->
-			<div class = "col-md-8">
-				<div class = "row">
-					<!--cast poster etc-->
-					<div class = "col-md-5">
-						<div class= "poster"><img src="<?php 
-						                    		$filename = 'poster/'.normalize($movieId).'.jpg';
-						                    		if(file_exists($filename)){
-						                    			echo $filename;
-						                    		}
-						                    		?>
-						                    		" class="img-thumbnail"></div>
-
-						<br>
-						<div class="panel panel-default">
-							  <div class="panel-body">
-							  	<table class="table table-hover table-condensed">
-			 	 						<tr><td>Rated</td><td> <?php echo $movieInfoRow['rated']?></li></td></tr>
-										<tr><td>Run time</td><td><?php echo $movieInfoRow['runtime']?></li></td></tr>
-										<tr><td>Genre</td><td><?php echo $movieInfoRow['genre']?></li></td></tr>
-										<tr><td>Awards</td><td><?php echo $movieInfoRow['awards']?></li></td></tr>
-										<tr><td>Box Office</td><td><?php echo $movieInfoRow['boxOffice']?></li></td></tr>
-										<tr><td>Website</td> <td><a href="<?php 
-								  if ($movieInfoRow['Website']=="N/A" ) echo "#"; else 
-								  echo $movieInfoRow['Website']?>"><?php echo $movieInfoRow['Website']?></a></td></tr>
-										<tr><td>Release Date</td><td><?php echo $movieInfoRow['releaseDate']?></li></td></tr>
-				 	 					<tr><td>Country</td><td><?php echo $movieInfoRow['country']?></li></td></tr>
-				 	 					<tr><td>Language</td><td><?php echo $movieInfoRow['language']?></li></td></tr>
-								</table>
-							  </div>
-							</div>		
-
-						<div class="panel panel-default">
-						  <div class="panel-body">
-						  	<table class="table table-hover table-condensed">
-		 	 						<tr><td>Director</td><td> <?php echo $movieInfoRow['director']?></li></td></tr>
-									<tr><td>Writer</td><td><?php echo $movieInfoRow['writer']?></li></td></tr>
-									<tr><td>Cast</td><td><?php echo $movieInfoRow['actors']?></li></td></tr>
-
-							</table>
-						  </div>
-						</div>
-					<!--end cast poster etc-->
-					</div>
-					<!--ratings etc-->
-					<h2><?php echo $nameRow['name'];?></h2>
-					<div class = "col-md-7">
-							<div class="panel panel-default">
-							  <div class="panel-body">  
-								<?php echo $movieInfoRow['plot']?>
-							  </div>
-							</div>
-							
-							<div class="panel panel-default">
-							  <div class="panel-body">
-						  <table class="table table-hover table-condensed">
-			 	 				<tr  class = "active"><td>Average Rating</td><td> 
-
-
-			 	 				<?php 
-
-
-			 	 				$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '$movieId'";
-								$averageRatingResult = mysqli_query($conn, $averageRatingQuery);
-								$averageRatingRow = mysqli_fetch_array($averageRatingResult);
-								$average = $averageRatingRow['average'];
-							 	
-							  echo $average;
-							  ?></td></tr>
-							  
-							  <tr  class = "active"><td>IMDb</td><td></td></tr>
-							  <tr><td>ID</td><td><?php echo $imdbRow['imdbID']?></td></tr>
-							  <tr><td>Rating</td><td><?php echo $imdbRow['imdbRating']?></td></tr>
-							  <tr><td>Votes</td><td><?php echo $imdbRow['imdbVotes']?></td></tr>
-							  <tr  class = "active"> <td>Metacritic score</td><td><?php echo $imdbRow['metaCriticScore']?></td></tr>
-							</table>
-						</div></div>
-
-						<div class = "panel panel-default">
-							<div class = "panel-body">
-								<div class = "row rotten">
-									<div class = "col-xs-6">
-										<p>Tomatometer</p>	
-										<div class="progress"> <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $tomatoRow['tomatoMeter']?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $tomatoRow['tomatoMeter']?>%;"><?php echo $tomatoRow['tomatoMeter']?>%</div>
+	            		<div role="tabpanel" class="tab-pane fade" id="general">
+	            			
+	            				<div class = "">
+									<div class = "">
+										<div class = "row rotten">
+											<div class = "col-xs-6">
+												<p>Tomatometer</p>	
+												<div class="progress"> <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $movieInfoRow['tomatoMeter']?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $movieInfoRow['tomatoMeter']?>%;"><?php echo $movieInfoRow['tomatoMeter']?>%</div>
+												</div>
+												<p >Average rating: <?php if(IsEmpty($movieInfoRow['tomatoRating'])){
+													echo 'N/A';
+												}else {echo $movieInfoRow['tomatoRating'].'/10';}
+												?>
+												</p>
+												  <p >Reviews: <?php echo $movieInfoRow['tomatoReviews']?></p>
+												  <p >Fresh: <?php echo $movieInfoRow['tomatoFresh']?></p>
+												  <p >Rotten: <?php echo $movieInfoRow['tomatoRotten']?></p>
+											</div>
+											<div class = "col-xs-6">
+													<p>Audience Score</p>	
+												<div class="progress"> <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $movieInfoRow['tomatoUserMeter']?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $movieInfoRow['tomatoUserMeter']?>%;"><?php echo $movieInfoRow['tomatoUserMeter']?>%</div>
+												</div>
+												<p>Average Rating: <?php if(IsEmpty($movieInfoRow['tomatoUserRating'])){
+													echo 'N/A';
+												}else {echo $movieInfoRow['tomatoUserRating'].'/5';}?></p>
+												 <p>Reviews: <?php echo $movieInfoRow['tomatoUserReviews']?></p>
+											</div>
+											
 										</div>
-										<p >Average rating: <?php if(IsEmpty($tomatoRow['tomatoRating'])){
-											echo 'N/A';
-										}else {echo $tomatoRow['tomatoRating'].'/10';}
-										?>
-										</p>
-										  <p >Reviews: <?php echo $tomatoRow['tomatoReviews']?></p>
-										  <p >Fresh: <?php echo $tomatoRow['tomatoFresh']?></p>
-										  <p >Rotten: <?php echo $tomatoRow['tomatoRotten']?></p>
 									</div>
-									<div class = "col-xs-6">
-											<p>Audience Score</p>	
-										<div class="progress"> <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $tomatoRow['tomatoUserMeter']?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $tomatoRow['tomatoUserMeter']?>%;"><?php echo $tomatoRow['tomatoUserMeter']?>%</div>
-										</div>
-										<p>Average Rating: <?php if(IsEmpty($tomatoRow['tomatoUserRating'])){
-											echo 'N/A';
-										}else {echo $tomatoRow['tomatoUserRating'].'/5';}?></p>
-										 <p>Reviews: <?php echo $tomatoRow['tomatoUserReviews']?></p>
-									</div>
-									
 								</div>
-							</div>
+								<hr style="border: 1px outset #595955;">
+
+								<div class = "row">
+									<div class = "col-xs-6">
+										<?php echo $movieInfoRow['plot']?>	
+
+										<table class="table table-hover table-condensed">
+				 	 						<tr><td>Rated</td><td> <?php echo $movieInfoRow['rated']?></li></td></tr>
+											<tr><td>Run time</td><td><?php echo $movieInfoRow['runtime']?></li></td></tr>
+											<tr><td>Genre</td><td><?php echo $movieInfoRow['genre']?></li></td></tr>
+											<tr><td>Awards</td><td><?php echo $movieInfoRow['awards']?></li></td></tr>
+											<tr><td>Box Office</td><td><?php echo $movieInfoRow['boxOffice']?></li></td></tr>
+											<tr><td>Website</td> <td><a href="<?php 
+									  if ($movieInfoRow['Website']=="N/A" ) echo "#"; else 
+									  echo $movieInfoRow['Website']?>"><?php echo $movieInfoRow['Website']?></a></td></tr>
+											<tr><td>Release Date</td><td><?php echo $movieInfoRow['releaseDate']?></li></td></tr>
+					 	 					<tr><td>Country</td><td><?php echo $movieInfoRow['country']?></li></td></tr>
+					 	 					<tr><td>Language</td><td><?php echo $movieInfoRow['language']?></li></td></tr>
+										</table>
+
+									</div>
+									<div class = "col-xs-6">
+
+										<table class="table table-hover table-condensed">
+						 	 				<tr  class = "active"><td>Total Weighted Average Rating (Metacritic, IMDB Rotten Tomatoes)</td><td> 
+						 	 				<?php 
+						 	 				
+										  echo $movieInfoRow['average'];
+										  ?></td></tr>
+										  
+										  <tr  class = "active"><td>IMDb</td><td></td></tr>
+										  <tr><td>ID</td><td><?php echo $movieInfoRow['imdbID']?></td></tr>
+										  <tr><td>Rating</td><td><?php echo $movieInfoRow['imdbRating']?></td></tr>
+										  <tr><td>Votes</td><td><?php echo $movieInfoRow['imdbVotes']?></td></tr>
+										  <tr  class = "active"> <td>Metacritic score</td><td><?php echo $movieInfoRow['metaCriticScore']?></td></tr>
+										</table>
+
+										<table class="table table-hover table-condensed">
+				 	 						<tr><td>Director</td><td> <?php echo $movieInfoRow['director']?></li></td></tr>
+											<tr><td>Writer</td><td><?php echo $movieInfoRow['writer']?></li></td></tr>
+											<tr><td>Cast</td><td><?php echo $movieInfoRow['actors']?></li></td></tr>
+										</table>
+									</div>
+								</div>
+								
+								<?php 
+								$screenshotList = $movieInfoRow['Screenshots'];
+								$temp = explode(" ", $screenshotList);//split subtitles
+								array_pop($temp);//remove last element as its a " "
+								?>
+								<div class = "row screenshots" style = "margin-top: 20px">
+								<?php foreach ($temp as $value) { //echo "aaa ".$value; ?>
+									<div class = "col-lg-4">
+									<img src = "<?php echo $value; ?>" ></img></div>
+									<?php } ?>
+
+								</div>
+
+								<br>
+								<div class = "fluidMedia">
+									<?php if($movieInfoRow['youtubeLink']!=null){?>
+									<iframe style = " display:block; width:90%; height:80%;" src="<?php 
+										$noHttps = str_replace("https","http",$movieInfoRow['youtubeLink']);
+										$embed = str_replace("watch?v=", "embed/", $noHttps);
+										echo $embed;?>"
+										>
+									</iframe>
+									<?php } ?>	
+								</div>
+								
+	            		</div>
+
+	            		<div role="tabpanel" class="tab-pane fade in active" id="social">
+
+	            			<div class = "row">
+	            				<div class = "col-xs-5">
+	            					<!--ratings chart-->
+									<div class="panel panel-default">
+									  <div class="panel-heading">
+									    <h3 class="panel-title">Ratings and votes over time</h3>
+									  </div>
+									  <div class="panel-body">
+											<div id="chart1"  style = "height:300px">
+											  <svg></svg>
+											</div>
+									  </div>
+									</div>
+
+			            		</div>
+	            				<div class = "col-xs-7">
+	            					<div class="panel panel-default">
+									  <div class="panel-heading">
+									    <h3 class="panel-title">Twitter Sentiment</h3>
+									  </div>
+									  <div class="panel-body">   
+											<div id="chart2"  style = "height:300px">
+											  <svg></svg>
+											</div>
+									  </div>
+									</div>
+	            				</div>
+	            			</div>
+	            			
+							
+							 <div class = "row">
+							 	<div class = "col-lg-50">
+							 		<div id="cloud" style="width: 750px; height: 350px;"></div>
+							 	</div>
+							 	<div class = "col-lg-50">
+							 		<div id="zrotate" style = "margin-right:10px"></div>
+							 	</div>
+							 </div>
+							
+							  
+								
 						</div>
-						<?php if($linkRow['youtubeLink']!=null){?>
-						<iframe style = " display:block; width:100%; height:50%;" src="<?php 
-							$noHttps = str_replace("https","http",$linkRow['youtubeLink']);
-							$embed = str_replace("watch?v=", "embed/", $noHttps);
-							echo $embed;?>"
-							>
-						</iframe>
-						<?php } ?>		
-					<!--end ratings etc-->	
-					</div>
-				</div>
-				
+	            		
 
-				
-		
-			<!--end movie info excluding twitter feed-->	
-			</div>
-			<!--twitter feed-->
-			<div class = "col-md-4">
+	            		</div>
+	                    </div>
+	                </div>
+            	</section>
+ 
+    </div>
+    <!-- /#wrapper -->
 
-				
-			
-						<?php 
-					$screenshotList = $movieInfoRow['Screenshots'];
-					$temp = explode(" ", $screenshotList);//split subtitles
-					array_pop($temp);//remove last element as its a " "
-					?>
-					<div class = "row screenshots" style = "margin-top: 20px">
-					<?php foreach ($temp as $value) { //echo "aaa ".$value; ?>
-						
-						<img src = "<?php echo $value; ?>" ></img><br><br>
-						<?php } ?>
-
-					</div>
-					
-					<div id="zrotate"></div>
-			</div>		
-					
-				
-			<!--end twitter feed-->	
-			</div>
-		<!--end main row excluding ads-->
-		</div>
-
-
-
-
-
-		<div class="panel panel-default">
-				  <div class="panel-body">
-				    <div id="cloud" style="width: 750px; height: 350px;"></div>
-				  </div>
-				</div>
-			
-
-		<!--ratings chart-->
-		<div class = "row">
-			
-			<div class = "col-lg-12">
-
-				<div class="panel panel-default">
-				  <div class="panel-heading">
-				    <h3 class="panel-title">Ratings and votes over time</h3>
-				  </div>
-				  <div class="panel-body">
-					   
-						<div id="chart1">
-						  <svg></svg>
-						</div>
-				  </div>
-				</div>
-				
-			</div>
-		</div>
-
-
-		<!--ratings chart-->
-		<div class = "row">
-			
-			<div class = "col-lg-12">
-
-				<div class="panel panel-default">
-				  <div class="panel-heading">
-				    <h3 class="panel-title">Sentiment</h3>
-				  </div>
-				  <div class="panel-body">
-					   
-						<div id="chart2">
-						  <svg></svg>
-						</div>
-				  </div>
-				</div>
-				
-			</div>
-		</div>
-
-
-		
-
-			
-
-			
-		
-
-			
-				
-		
-		
-
-
-		
-
-		
-				
-
-			
-
-
-
-
-
-
-
-
-		
-		
-		
-	 
-	</div><!--end jumbotron-->
-	<!--jumbotron row (currently 12 but 11 with ads)-->
-	</div>
-
-	<!--ad-->
-	<!--<div class = "col-xs-1"></div>-->
-
-	</div><!--end full row-->
 	
-	</article>
-	</section>
-</div>
+	
+
+		
 
 
 
@@ -340,7 +320,21 @@ $nameRow = mysqli_fetch_array($nameResult);
 <script src="js/jqcloud.min.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="js/nv.d3.min.js"></script>
+
+
 <script>
+    $('.sidebar-nav li').click(function(e) {
+    $('.sidebar-nav li.menuActive').removeClass('menuActive');
+    var $this = $(this);
+    if (!$this.hasClass('menuActive')) {
+        $this.addClass('menuActive');
+    }
+    e.preventDefault();
+});
+    </script>
+
+<script>
+
 	<?php 
 		printWordCloud(normalize($movieId));
 	?>
@@ -354,7 +348,7 @@ $nameRow = mysqli_fetch_array($nameResult);
 <script type="text/javascript">
 $(document).ready(function () {
 
-	var url = "<?php echo 'https://queryfeed.net/tw?q=%23'.normalize($nameRow['movieId']); ?>";
+	var url = "<?php echo 'https://queryfeed.net/tw?q=%23'.normalize($movieInfoRow['movieId']); ?>";
 	console.log(url);
 	$('#zticker').rssfeed(url,{
 		header: false,
@@ -389,18 +383,58 @@ $(document).ready(function () {
 
 
 <!--newer ratings using nvd3-->
+
+<script>
+
+
+ /*
+ var testdata1 = [
+        {
+            "key" : "Rating" ,
+             "values" : [ <?php printChartData2(1, $imdbRow['imdbID']);?>],
+            "type":"bar",
+            "yAxis":1
+        },
+        {
+            "key" : "Votes" ,
+             "values" : [ <?php printChartData2(0, $imdbRow['imdbID']);?>],
+            "type":"bar",
+            "yAxis":2
+        }
+    ]
+nv.addGraph(function() {
+  var chart = nv.models.multiChart()
+  .margin({top: 30, right: 60, bottom: 50, left: 70})
+  .color(d3.scale.category10().range());
+  
+  chart.xAxis.tickFormat(function(d) {
+              return d3.time.format('%d/%m/%Y')(new Date(d))
+             });
+  chart.yAxis1.tickFormat(d3.format(',.0f'));
+  chart.yAxis2.tickFormat(d3.format(',.1f'));
+  
+  d3.select('#chart1 svg')
+  .datum(testdata1)
+  .transition().duration(500).call(chart);
+  
+  return chart;
+});
+*/
+
+</script>
+
 <script>
    var testdata1 = [
         {
             "key" : "Rating" ,
-            "bar": true,
-             "color": "#ccf",
-            "values" : [ <?php printChartData(1, $imdbRow['imdbID']);?>]
+            "color" : "#333",
+            "values" : [ <?php printChartData(1, $movieInfoRow['imdbID']);?>]
         },
         {
             "key" : "Votes" ,
-            "color" : "#333",
-            "values" : [ <?php printChartData(0, $imdbRow['imdbID']);?>]
+            "bar": true,
+            "color": "#ccf",
+            "values" : [ <?php printChartData(0, $movieInfoRow['imdbID']);?>]
         }
     ].map(function(series) {
             series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -411,17 +445,17 @@ $(document).ready(function () {
     nv.addGraph(function() {
         chart = nv.models.linePlusBarChart()
             .margin({top: 50, right: 80, bottom: 30, left: 80})
-            .legendRightAxisHint(' [Using Right Axis]')
+            .legendRightAxisHint(' [Line]')
+            .forceY([0,10])
             .color(d3.scale.category10().range());
         chart.xAxis.tickFormat(function(d) {
                 return d3.time.format('%x')(new Date(d))
             })
-            .showMaxMin(false);
-        chart.y1Axis.tickFormat(function(d) { return d3.format(',f')(d) });
+            .showMaxMin(false).axisLabel("Date");
+        chart.y1Axis.tickFormat(function(d) { return d3.format(',f')(d) }).axisLabel("Votes (bar)");
+        chart.y2Axis.axisLabel("Rating (Line)");
         chart.bars.forceY([0]).padData(false);
-        chart.x2Axis.tickFormat(function(d) {
-            return d3.time.format('%x')(new Date(d))
-        }).showMaxMin(false);
+
         d3.select('#chart1 svg')
             .datum(testdata1)
             .transition().duration(500).call(chart);
@@ -430,6 +464,8 @@ $(document).ready(function () {
         return chart;
     });
 </script>
+
+
 
 <script>
 /*
@@ -445,18 +481,18 @@ $(document).ready(function () {
             "key" : "Positive" ,
             "bar": true,
              "color": "blue",
-            "values" : [ <?php printSentiment(0, normalizeCaseSen($nameRow['name']));?>]
+            "values" : [ <?php printSentiment(0, normalizeCaseSen($movieInfoRow['name']));?>]
         },
         {
             "key" : "Negative" ,
             "bar": true,
             "color" : "red",
-            "values" : [ <?php printSentiment(1, normalizeCaseSen($nameRow['name']));?>]
+            "values" : [ <?php printSentiment(1, normalizeCaseSen($movieInfoRow['name']));?>]
         },{
             "key" : "Neutral" ,
             "bar": true,
              "color": "#ccf",
-            "values" : [ <?php printSentiment(2, normalizeCaseSen($nameRow['name']));?>]
+            "values" : [ <?php printSentiment(2, normalizeCaseSen($movieInfoRow['name']));?>]
         }
     ].map(function(series) {
             series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -488,227 +524,47 @@ $(document).ready(function () {
 });
 </script>
 
+<script type="text/javascript">
+//datalayer events
 
-<!--new ratings chart d3-->
-<script>
+////window.snowplow('trackStructEvent', 'link', 'linkClick', {{movieId}}, {{link}}, '0.0');
+function linkEvent(link){
+	dataLayer.push({
+	  'event': 'linkClick',
+	  'movieId': '<?php echo mysqli_real_escape_string($conn,$movieInfoRow['movieId']);?>',
+	  'link': link
+	});
+}
 
-/*var margin = {top: 30, right: 40, bottom: 30, left: 50},
-    width = 600 - margin.left - margin.right,
-    height = 270 - margin.top - margin.bottom;
+////window.snowplow('trackStructEvent', 'category', 'changeInformationCategory', {{movieId}}, {{infoCategory}}, '0.0');
+function infoCategoryEvent(category){
+	dataLayer.push({
+	  'event': 'changeInformationCategory',
+	  'movieId': '<?php echo mysqli_real_escape_string($conn,$movieInfoRow['movieId']);?>',
+	  'infoCategory': category
+	});
+}
 
-var parseDate = d3.time.format("%d/%m/%Y").parse;
+//window.snowplow('trackStructEvent', 'link', 'navLinkClick', '0', {{link}}, '0.0');
+function navClickEvent(link){
+	dataLayer.push({
+	  'event': 'navLinkClick',
+	  'link': link
+	});
+}
 
-var x = d3.time.scale().range([0, width]);
-var y0 = d3.scale.linear().range([height, 0]);
-var y1 = d3.scale.linear().range([height, 0]);
-
-var xAxis = d3.svg.axis().scale(x)
-    .orient("bottom").ticks(5);
-
-var yAxisLeft = d3.svg.axis().scale(y0)
-    .orient("left").ticks(5);
-
-var yAxisRight = d3.svg.axis().scale(y1)
-    .orient("right").ticks(5); 
-
-var valueline = d3.svg.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y0(d.votes); });
-    
-var valueline2 = d3.svg.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y1(d.rating); });
-  
-var svg = d3.select("#graph")
-       .append("div")
-	   .classed("svg-container", true) //container class to make it responsive
-	   .append("svg")
-	   //responsive SVG needs these 2 attributes and no width and height attr
-	   .attr("preserveAspectRatio", "xMinYMin meet")
-	   .attr("viewBox", "0 0 600 400")
-	   //class to make it responsive
-	   .classed("svg-content-responsive", true)
-	   .append("g")
-        .attr("transform", 
-              "translate(" + margin.left + "," + margin.top + ")"); 
-
-    
-
-// Get the data
-d3.csv("<?php echo "ratings/".$imdbRow['imdbID'].".csv";?>", function(error, data) {
-    data.forEach(function(d) {
-        d.date = parseDate(d.date);
-        d.votes = +d.votes;
-        d.rating = +d.rating;
-    });
-
-    // Scale the range of the data
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y0.domain([0, d3.max(data, function(d) {
-		return Math.max(d.votes); })]); 
-    y1.domain([0, d3.max(data, function(d) { 
-		return Math.max(d.rating); })]);
-
-    svg.append("path")        // Add the valueline path.
-        .attr("d", valueline(data));
-
-    svg.append("path")        // Add the valueline2 path.
-        .style("stroke", "red")
-        .attr("d", valueline2(data));
-
-    svg.append("g")            // Add the X Axis
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-    svg.append("g")
-        .attr("class", "y axis")
-        .style("fill", "steelblue")
-        .call(yAxisLeft);	
-
-    svg.append("g")				
-        .attr("class", "y axis")	
-        .attr("transform", "translate(" + width + " ,0)")	
-        .style("fill", "red")		
-        .call(yAxisRight);
-
-});*/
+//window.snowplow('trackStructEvent', 'search', 'navSearchClick', '0', {{searchValue}}, '0.0');
+function navSearchEvent(){
+	var searchValue = document.getElementById('searchNameNavbar').value;
+	dataLayer.push({
+	  'event': 'searchClick',
+	  'searchValue': searchValue
+	});
+}
 
 </script>
 
-<!--RATINGS CHART-->
-<script>
 
-
-// instantiate our graph!
-//data format [{x: abc, y:def}, {x: abc, y:def}]
-/*var graph2 = new Rickshaw.Graph( {
-	element: document.getElementById("chart"),
-	width: 960,
-	height: 500,
-	renderer: 'line',
-	series: [
-		{
-			color: "#c05020",
-			data: [<?php printChartData(1, $imdbRow['imdbID']);?>],
-			name: 'Rating'
-		}, {
-			color: "#30c020",
-			data: [<?php printChartData(0, $imdbRow['imdbID']);?>],
-			name: 'Votes'
-		}
-	]
-} );
-
-
-var x_axis2 = new Rickshaw.Graph.Axis.Time( { graph: graph2 } );
-
-var y_axis2 = new Rickshaw.Graph.Axis.Y( {
-        graph: graph2,
-        orientation: 'left',
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.getElementById('y_axis'),
-} );
-
-graph2.render();
-var legend2 = document.querySelector('#legend');
-var Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
-	render: function(args) {
-		legend2.innerHTML = args.formattedXValue;
-		args.detail.sort(function(a, b) { return a.order - b.order }).forEach( function(d) {
-			var line = document.createElement('div');
-			line.className = 'line';
-			var swatch = document.createElement('div');
-			swatch.className = 'swatch';
-			swatch.style.backgroundColor = d.series.color;
-			var label = document.createElement('div');
-			label.className = 'label';
-			label.innerHTML = d.name + ": " + d.formattedYValue;
-			line.appendChild(swatch);
-			line.appendChild(label);
-			legend2.appendChild(line);
-			var dot = document.createElement('div');
-			dot.className = 'dot';
-			dot.style.top = graph2.y(d.value.y0 + d.value.y) + 'px';
-			dot.style.borderColor = d.series.color;
-			this.element.appendChild(dot);
-			dot.className = 'dot active';
-			this.show();
-		}, this );
-        }
-});
-var hover = new Hover( { graph: graph2 } ); */
-</script>
-
-
-<script>
-// instantiate our graph!
-//data format [{x: abc, y:def}, {x: abc, y:def}]
-/*var graph = new Rickshaw.Graph( {
-	element: document.getElementById("sentchart"),
-	width: 960,
-	height: 500,
-	renderer: 'line',
-	series: [
-		{
-			color: "#c05020",
-			data: [<?php printSentiment(0, str_replace($unwantedChars, "", $nameRow['name']));?>],
-			name: 'Positive'
-		}, {
-			color: "#30c020",
-			data: [<?php printSentiment(1, str_replace($unwantedChars, "", $nameRow['name']));?>],
-			name: 'Negative'
-		},{
-			color: "#c05020",
-			data: [<?php printSentiment(2, str_replace($unwantedChars, "", $nameRow['name']));?>],
-			name: 'Neutral'
-		},{
-			color: "#c05020",
-			data: [<?php printSentiment(3, str_replace($unwantedChars, "", $nameRow['name']));?>],
-			name: 'Tweet Count'
-		}
-	]
-} );
-
-
-var x_axis= new Rickshaw.Graph.Axis.Time( { graph: graph } );
-
-var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph,
-        orientation: 'left',
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.getElementById('senty_axis'),
-} );
-
-graph.render();
-var legend = document.querySelector('#sentlegend');
-var Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
-	render: function(args) {
-		legend.innerHTML = args.formattedXValue;
-		args.detail.sort(function(a, b) { return a.order - b.order }).forEach( function(d) {
-			var line = document.createElement('div');
-			line.className = 'line';
-			var swatch = document.createElement('div');
-			swatch.className = 'swatch';
-			swatch.style.backgroundColor = d.series.color;
-			var label = document.createElement('div');
-			label.className = 'label';
-			label.innerHTML = d.name + ": " + d.formattedYValue;
-			line.appendChild(swatch);
-			line.appendChild(label);
-			legend.appendChild(line);
-			var dot = document.createElement('div');
-			dot.className = 'dot';
-			dot.style.top = graph.y(d.value.y0 + d.value.y) + 'px';
-			dot.style.borderColor = d.series.color;
-			this.element.appendChild(dot);
-			dot.className = 'dot active';
-			this.show();
-		}, this );
-        }
-});
-var hover = new Hover( { graph: graph } ); */
-</script>
 
 
 

@@ -1,0 +1,104 @@
+aws:
+  # Credentials can be hardcoded or set in environment variables
+  access_key_id: "AKIAIJ6FHDVU32AF2OZQ"
+  secret_access_key: "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"
+  s3:
+    region: eu-west-1
+    buckets:
+      assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+      jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
+      log: s3://jack-snowplow-etl/logs/
+      raw:
+        in: 
+          - "s3n://jack-final-year-logs/"
+        processing: s3://jack-snowplow-etl/processing/
+        archive: s3://jack-archive-bucket/raw    # e.g. s3://my-archive-bucket/raw
+      enriched:
+        good: s3://jack-data-bucket/enriched/good       # e.g. s3://my-out-bucket/enriched/good
+        bad: s3://jack-data-bucket/enriched/bad        # e.g. s3://my-out-bucket/enriched/bad
+        errors: s3://jack-data-bucket/enriched/errors     # Leave blank unless :continue_on_unexpected_error: set to true below
+        archive: s3://jack-data-bucket/enriched/archive    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
+      shredded:
+        good: s3://jack-data-bucket/shredded/good       # e.g. s3://my-out-bucket/shredded/good
+        bad: s3://jack-data-bucket/shredded/bad       # e.g. s3://my-out-bucket/shredded/bad
+        errors: s3://jack-data-bucket/shredded/errors     # Leave blank unless :continue_on_unexpected_error: set to true below
+        archive: s3://jack-data-bucket/shredded/archive    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+  emr:
+    ami_version: 4.3.0
+    region: eu-west-1        # Always set this
+    jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
+    service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
+    placement: eu-west-1a     # Set this if not running in VPC. Leave blank otherwise
+    ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
+    ec2_key_name: jackKeyPair
+    bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
+    software:
+      hbase:                # Optional. To launch on cluster, provide version, "0.92.0", keep quotes. Leave empty otherwise.
+      lingual:              # Optional. To launch on cluster, provide version, "1.1", keep quotes. Leave empty otherwise.
+    # Adjust your Hadoop cluster below
+    jobflow:
+      master_instance_type: m1.medium
+      core_instance_count: 2
+      core_instance_type: m1.medium
+      task_instance_count: 0 # Increase to use spot instances
+      task_instance_type: m1.medium
+      task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
+    bootstrap_failure_tries: 3 # Number of times to attempt the job in the event of bootstrap failures
+    additional_info:        # Optional JSON string for selecting additional features
+collectors:
+  format: cloudfront # For example: 'clj-tomcat' for the Clojure Collector, 'thrift' for Thrift records, 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs or 'ndjson/urbanairship.connect/v1' for UrbanAirship Connect events
+enrich:
+  job_name: emrEtlRunnerJob # Give your job a name
+  versions:
+    hadoop_enrich: 1.6.0 # Version of the Hadoop Enrichment process
+    hadoop_shred: 0.8.0 # Version of the Hadoop Shredding process
+    hadoop_elasticsearch: 0.1.0 # Version of the Hadoop to Elasticsearch copying process
+  continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
+  output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
+storage:
+  download:
+    folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
+  targets:
+    - name: "My Redshift database"
+      type: redshift
+      host: ADD HERE # The endpoint as shown in the Redshift console
+      database: ADD HERE # Name of database
+      port: 5439 # Default Redshift port
+      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
+      table: atomic.events
+      username: 
+      password: 
+      maxerror: 1 # Stop loading on first error, or increase to permit more load errors
+      comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+    - name: "My PostgreSQL database"
+      type: postgres
+      host:  # Hostname of database server
+      database:  # Name of database
+      port: 5432 # Default Postgres port
+      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
+      table: atomic.events
+      username: 
+      password: 
+      maxerror: # Not required for Postgres
+      comprows: # Not required for Postgres
+    - name: "My Elasticsearch database"
+      type: elasticsearch
+      host:  # The Elasticsearch endpoint
+      database:  # Name of index
+      port: 9200 # Default Elasticsearch port - change to 80 if using Amazon Elasticsearch Service
+      sources: # Leave blank to write the bad rows created in this run to Elasticsearch, or explicitly provide an array of bad row buckets like ["s3://my-enriched-bucket/bad/run=2015-10-06-15-25-53"]
+      ssl_mode: # Not required for Elasticsearch
+      table: ADD HERE # Name of type
+      username: # Not required for Elasticsearch
+      password: # Not required for Elasticsearch
+      es_nodes_wan_only: false # Set to true if using Amazon Elasticsearch Service
+      maxerror: # Not required for Elasticsearch
+      comprows: # Not required for Elasticsearch
+monitoring:
+  tags: {} # Name-value pairs describing this job
+  logging:
+    level: DEBUG # You can optionally switch to INFO for production
+  snowplow:
+    method: get
+    app_id:  # e.g. snowplow
+    collector:  # e.g. d3rkrsqld9gmqf.cloudfront.net

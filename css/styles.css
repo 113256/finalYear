@@ -4,11 +4,11 @@ body{
 
 
     height:100%;  
-  background: url(../img/background.jpg) no-repeat center center fixed; /*put img in body so that it wnot slide with carousel */
-  -webkit-background-size: cover; /*so img covers screen*/
-  -moz-background-size: cover;/*so img covers screen*/
-  -o-background-size: cover;/*so img covers screen*/
-  background-size: cover;/*so img covers screen*/
+  /*background: url(../img/background.jpg) no-repeat center center fixed; put img in body so that it wnot slide with carousel */
+  /*-webkit-background-size: cover; so img covers screen*/
+ /* -moz-background-size: cover;so img covers screen*/
+ /* -o-background-size: cover;so img covers screen*/
+ /* background-size: cover;so img covers screen*/
 }
 
 
@@ -42,6 +42,11 @@ h4{
 .bg-light-gray {
     background-color: #f7f7f7;
 }
+
+.bg-white {
+    background-color: #fff;
+}
+
 
 .bg-light-red {
     background-color: #E27070
@@ -173,6 +178,12 @@ tr.spaceUnder > td
     max-width: 450px; /* corresponds to max height of 450px */
 }
 
+.miniPoster img {
+    display: block;
+    width: 100%;
+    max-width: 150px; /* corresponds to max height of 450px */
+}
+
 
 
 .screenshots img {
@@ -250,4 +261,171 @@ width: 90%;
         width: 20%;
         float: left;
     }
+}
+
+
+/*2 custom columns*/
+.col-xs-50,
+.col-sm-50,
+.col-md-50,
+.col-lg-50 {
+    position: relative;
+    min-height: 1px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.col-xs-50 {
+    width: 50%;
+    float: left;
+}
+
+@media (min-width: 768px) {
+.col-sm-50 {
+        width: 100%;
+        float: left;
+    }
+}
+@media (min-width: 992px) {
+    .col-md-50 {
+        width: 100%;
+        float: left;
+    }
+}
+@media (min-width: 1750px) {
+    .col-lg-50 {
+        width: 50%;
+        float: left;
+    }
+}
+
+.fluidMedia {
+    position: relative;
+    padding-bottom: 56.25%; /* proportion value to aspect ratio 16:9 (9 / 16 = 0.5625 or 56.25%) */
+    padding-top: 30px;
+    height: 0;
+    overflow: hidden;
+}
+
+.fluidMedia iframe {
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.formHover li {
+  cursor: pointer;
+}
+
+.captionjs, .captionjs figcaption {
+      margin: 0 0 20px;
+      padding: 0;
+    }
+    .captionjs figcaption {
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-top: none;
+      background-color: #eee;
+    }
+    .captionjs.stacked figcaption {
+      background-color: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: none;
+    }
+    .captionjs.animated figcaption {
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background-color: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: none;
+    }
+    .captionjs.hide figcaption {
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background-color: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: none;
+    }
+    .captionjs.default a {
+      color: #000;
+    }
+
+    /*rickshaw js*/
+    #chart_container, #sentchart_container {
+      width: 960px;
+    }
+    .swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin: 0 8px 0 0;
+    }
+    .label {
+      color: black;
+      display: inline-block;
+    }
+    .line {
+      display: inline-block;
+      margin: 0 0 0 30px;
+    }
+    #legend, #sentlegend {
+      text-align: center;
+    }
+    .rickshaw_graph .detail {
+      background: none;
+    }
+    #y_axis, #senty_axis {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 40px;
+    }
+    
+        #axis0 {
+        position: absolute;
+        height: 800px;
+        width: 40px;
+      }
+      #axis1 {
+        position: absolute;
+        left: 1050px;
+        height: 800px;
+        width: 40px;
+      }
+
+
+.svg-container {font: 8px Arial;
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 50%; /* aspect ratio */
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+
+
+path { 
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+ svg {
+    display: block;
 }

@@ -3,9 +3,9 @@
 require('../includes/connect.php');
 //require('../includes/string.php');
 
-require("../content/recentlyReleased.php");
-require('../content/getTodayShow.php');
-require('../content/updateWordCloud.php');
+require("../functions/recentlyReleased.php");
+require('../functions/getTodayShow.php');
+require('../functions/updateRatings.php');
 
 error_reporting(E_ALL);
 ini_set('display_errors','On');

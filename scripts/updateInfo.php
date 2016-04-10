@@ -179,7 +179,7 @@
 			$youtubeLink = "";
 
 			echo " --inserting...-";
-
+													
 			$movieInfoInsertQuery = "UPDATE `movieinfo` SET 
 				rated = IF(LENGTH(rated)=0, '$rated', rated),
 				releaseDate = IF(LENGTH(releaseDate)=0, '$releaseDate', releaseDate),

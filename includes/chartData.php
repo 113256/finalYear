@@ -1,7 +1,7 @@
 <?php 
 	//print ratings
 	//0 for votes, 1 for rating
-	/*function printChartData($votesOrRating, $imdbID){
+	function printChartData2($votesOrRating, $imdbID){
 
 	$file = file_get_contents("ratings/".$imdbID.".php");
 	//echo $file."<br>";
@@ -15,23 +15,23 @@
 	foreach ($dayRatingVote as $field){
 		$array = explode(":", $field);
 		//print_r($array) ;
-		$date = strtotime($array[0]);//strtotime to convert to epoch time
+		$date = strtotime($array[0])*1000;//strtotime to convert to epoch time
 		$rating = $array[1];
 		$votes = str_replace(",", "", $array[2]);
 
 
 		////data format [{x: abc, y:def}, {x: abc, y:def}]
 		if ($votesOrRating == 0){
-			$dataString.="{x:".$date.",y:".$votes."},";
+			$dataString.='{"x":'.$date.',"y":'.$votes.'},';
 		} else {
-			$dataString.="{x:".$date.",y:".$rating."},";
+			$dataString.='{"x":'.$date.',"y":'.$rating.'},';
 		}
 		
 
 	}
 	$dataString = rtrim($dataString, ",");
 	echo $dataString;
-	}*/
+	}
 
 
 	function printChartData($votesOrRating, $imdbID){
@@ -169,12 +169,7 @@
 		/*
 		var words = [
 	  {text: "Lorem", weight: 13},
-	  {text: "Ipsum", weight: 10.5},
-	  {text: "Dolor", weight: 9.4},
-	  {text: "Sit", weight: 8},
-	  {text: "Amet", weight: 6.2},
-	  {text: "Consectetur", weight: 5},
-	  {text: "Adipiscing", weight: 5},
+	  {text: "Ipsum", weight: 10.5}
 	  ];
 
 		*/

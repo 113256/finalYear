@@ -3,12 +3,11 @@
 require('../includes/connect.php');
 require('../includes/string.php');
 
-require("../content/recentlyReleased.php");
-require('../content/getTodayShow.php');
-require('../content/updateRatings.php');
+require("../functions/recentlyReleased.php");
+require('../functions/getTodayShow.php');
+require('../functions/updateRatings.php');
 
-set_time_limit(3600);
-error_reporting(E_ALL);
+
 set_time_limit(3600);
 
 //EMPTIES tvshow         		

@@ -2,10 +2,10 @@
 
 require('../includes/connect.php');
 require('../includes/string.php');
-
-require("../content/theatreReleased.php");
-require('../content/getTodayShow.php');
-require('../content/updateRatings.php');
+require("../functions/theatreReleased.php");
+require("../functions/recentlyReleased.php");
+require('../functions/getTodayShow.php');
+require('../functions/updateRatings.php');
 
 
 set_time_limit(3600);

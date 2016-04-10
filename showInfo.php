@@ -1,8 +1,5 @@
-
-<html>
-<?php require('includes/head.php');
+<?php 
 require('includes/connect.php');
-require('includes/navbar.php');
 require('includes/string.php');
 
 
@@ -15,10 +12,6 @@ $showResult = mysqli_query($conn, $showQuery);
 $showRow = mysqli_fetch_array($showResult);
 
 $date = date(('Y-m-d'));
-
-
-
-
 
 //episode
 $episodeName = $showRow['episodeName'];
@@ -48,41 +41,61 @@ $showSummary = $showRow['showSummary'];
 
 ?>
 
+<!DOCTYPE html>
+<html>
+<?php require('includes/head.php'); ?>
 <body>
+<script type="text/javascript">
+dataLayer = [
+				{
+		            'episodeName': '<?php echo $showRow['episodeName'];?>',
+		            'season': '<?php echo $showRow['season'];?>',
+		            'number': '<?php echo $showRow['number'];?>',
+		            'airdate': '<?php echo $showRow['airdate'];?>',
+		            'airtime': '<?php echo $showRow['airtime'];?>',
+		            'airstamp': '<?php echo $showRow['airstamp'];?>',
+		            'showRuntime': '<?php echo $showRow['runtime'];?>',
+		            'showName': '<?php echo $showRow['showName'];?>',
+		            'showType': '<?php echo $showRow['showType'];?>',
+		            'showLanguage': '<?php echo $showRow['showLanguage'];?>',
+		            'showPremiered': '<?php echo $showRow['showPremiered'];?>',
+		            'showAverageRating': '<?php echo $showRow['showAverageRating'];?>',
+		            'showGenre': '<?php echo $showRow['showGenre'];?>'
+       			 }
+        	];
+</script>
+
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K4D47X"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K4D47X');</script>
+<!-- End Google Tag Manager -->
+
+
+<?php require('includes/navbar.php'); ?>
 
 <div id = "background" class = "container-small" style="margin-bottom:45px;" >
 <section id = "" class = "">	
 
 	<article>	
-	<!--<div class = "jumbotron">
-		<h1>ad</h1>
-	</div>-->
-
-
-	<div class="btn-group" role="group" aria-label="...">
-	 <a href = "<?php echo $subtitleLink?>" class="btn btn-primary btn-lg">Subtitles</a>
-	</div>
-	
-	
-
-	
-
-
+		<br><br>
 	<div class = "row">
 
 	<!--change to 11 or less whens ad-->
 	<div class = "col-xs-12">
-	<div class="jumbotron">
-
 
 		<!--main row excluding ads-->
 		<div class = "row">
 			<!--movie info excluding twitter feed-->
-			<div class = "col-md-9">
+			<div class = "col-md-12">
 				<div class = "row">
 					<!--cast poster etc-->
-					<div class = "col-md-5">
-						<div class= "poster"><img src="<?php echo $image?>" class="img-thumbnail"></div>
+					<div class = "col-md-3">
+						<div class= "poster"><img src="<?php echo $image?>" class="img-thumbnail" alt = "<?php echo $urlEpisodeName; ?>"></div>
 
 						<br>
 						<div class="panel panel-default">
@@ -100,7 +113,7 @@ $showSummary = $showRow['showSummary'];
 					</div>
 					<!--ratings etc-->
 					<h2><?php echo $episodeName."    -".$showName."   -S".$season."E".$number?></h2>
-					<div class = "col-md-7">				
+					<div class = "col-md-9">				
 						<div class="panel panel-default">
 								<div class="panel-heading">Episode summary</div>
 							  <div class="panel-body" >  
@@ -140,15 +153,10 @@ $showSummary = $showRow['showSummary'];
 		
 			<!--end movie info excluding twitter feed-->	
 			</div>
-			<!--twitter feed-->
-			<div class = "col-md-3">
-				<div id="zrotate"></div>
-			<!--end twitter feed-->	
-			</div>
+			
 		<!--end main row excluding ads-->
 		</div>
 
-	</div><!--end jumbotron-->
 	<!--jumbotron row (currently 12 but 11 with ads)-->
 	</div>
 

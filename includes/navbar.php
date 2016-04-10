@@ -32,48 +32,33 @@
 						<!-- we add a home button
 						but this will disappear if screen is smaller if didn't add a responsive button
 						-->
+						<a class = "navbar-brand">Clueue- Social media metrics for films and movies</a>
 						<!-- active means it will be highlighted in the bar-->
-						<li class = "" ><a href = "index.php">Home</a></li>
-						<li class = "" ><a href = "movies.php">2015 Films</a></li>
-						<li class = "" ><a href = "theatre.php">In Theatres</a></li>
-						<li class = "" ><a href = "recent.php">Recently Released</a></li>
-						<li class = "" ><a href = "todayShows.php">Recent TV Shows</a></li>
-						 <form class="navbar-form navbar-left form-inline" role="search" action = "movieShowtimes.php" method = "get">
-						 	<div class = "form-group">Display showtimes</div>
-						 	<div class = "form-group">
-							<select class="form-control" id = "movie" name = "movie" required>
-								<option value="All">All movies</option>
-								<!--<option value="Afganistan">Afghanistan</option>-->
-								<?php
-									$theatreQuery = "SELECT * FROM `movieinfo` AS i INNER JOIN `intheatres` AS t on i.movieId = t.movieId WHERE 1=1";
-									$theatreResult = mysqli_query($conn, $theatreQuery);
-									mysqli_data_seek($theatreResult,0);//return to 0th index
-									while ($row = mysqli_fetch_array($theatreResult))//redundant
-									{			
-										$movieNameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$row['movieId']."'";
-										$movieNameResult = mysqli_query($conn, $movieNameQuery);
+						<li class = "" ><a href = "index.php">Films</a></li>
 
-										if(!$movieNameResult)
-										{
-											continue;
-										}
-
-										$movieNameRow = mysqli_fetch_array($movieNameResult);
-										echo '<option value="'.$movieNameRow['name'].'">'.$movieNameRow['name'].'</option>';
-									}
-
-								?>
-								
-							</select>
-						</div>
-					        <div class="form-group">
-					          <input name = "postcode" type="text" class="form-control" placeholder="Postcode">
-					        </div>
-					        <div class="form-group">
-					          <input name = "date" type="date" class="form-control">
-					        </div>
-					        <button type="submit" class="btn btn-default">Display showtimes</button>
-					      </form>
+						 <li class = "" ><a onclick = "navClickEvent('recentTvShows')" href = "todayShows.php">Recent TV Shows</a></li>
+						 <li class = "" ><a onclick = "navClickEvent('topTrending2015')"href = "toptrending2015.php">Top trending films 2015</a></li>
+						 <?php $dateToday = date('Y-m-d');?>
+				         <li class = "" ><a onclick = "navClickEvent('movieShowtimes')"href = "movieShowtimes.php?movie=All&postcode=nw1&date=<?php echo $dateToday?>">Showtimes</a></li>
+						<!--<li class="dropdown">
+				          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Movies and shows <span class="caret"></span></a>
+				          <ul class="dropdown-menu">
+				            <li class = "" ><a href = "todayShows.php">Recent TV Shows</a></li>
+				            <li class = "" ><a href = "toptrending2015.php">Top trending films 2015</a></li>
+				            <?php $dateToday = date('Y-m-d');?>
+				            <li class = "" ><a href = "movieShowtimes.php?movie=All&postcode=nw1&date=<?php echo $dateToday?>">Showtimes</a></li>
+				          </ul>
+				        </li>-->
+						<form class="navbar-form navbar-left form-inline" action = "index.php" method = "get">
+						  <div class="form-group">
+						    <input type="text" class="form-control" id = "searchNameNavbar" name = "searchNameNavbar" placeholder="Search for movies">
+						  </div>
+						  <input type="submit" onclick = "navSearchEvent()" class="btn btn-default" value = "Search"></button>
+						</form>	
+						
+						
+						
+						 
 
 						<!--button as dropdown -->
 						<!--<li class = "dropdown">

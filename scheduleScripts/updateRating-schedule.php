@@ -3,9 +3,9 @@
 require('../includes/connect.php');
 require('../includes/string.php');
 
-require("../content/recentlyReleased.php");
-require('../content/getTodayShow.php');
-require('../content/updateRatings.php');
+require("../functions/recentlyReleased.php");
+require('../functions/getTodayShow.php');
+require('../functions/updateRatings.php');
 
 error_reporting(E_ALL);
 ini_set('display_errors','On');
@@ -22,6 +22,6 @@ $py_args = "";
 //update ratings
 //format (just split by , and :)
 //date:rating(imdb):votes,date:rating(imdb):votes, date:rating(imdb):votes, ..
-updateRating();
+updateRating(1);
 echo "done updaterating";
 ?>

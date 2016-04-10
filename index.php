@@ -2,8 +2,8 @@
 
 
 require('includes/connect.php');
-require('includes/head.php');
-
+require('includes/generateDataLayer.php');
+require('includes/string.php');
 
 $details = json_decode(file_get_contents("http://ipinfo.io/"));
 $postcode=$details->postal; 
@@ -20,7 +20,7 @@ $movieInfoQueryGen = "SELECT * FROM `movieinfo` WHERE 1=1";
 $showQuery = "SELECT * FROM `tvshow` WHERE 1=1";
 $showResult = mysqli_query($conn, $showQuery);
 
-$theatreQuery = "SELECT * FROM `movieinfo` AS i INNER JOIN `intheatres` AS t on i.movieId = t.movieId WHERE 1=1";
+$theatreQuery = "SELECT * FROM `movieinfo` AS i INNER JOIN `intheatres` AS t on i.movieId = t.movieId INNER JOIN `moviename` as m on i.movieId=m.movieId";
 $theatreResult = mysqli_query($conn, $theatreQuery);
 
 
@@ -32,544 +32,867 @@ $formattedRecentDate = $datefile;
 $recentQuery = "SELECT * FROM `movieinfo` WHERE 1=1 AND releaseDate = '$formattedRecentDate'";
 $recentResult = mysqli_query($conn, $recentQuery);
 
-
-$sentRankingQueryPositive = "SELECT positive, negative, m.name, m.movieId FROM `sentrank` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId ORDER BY positive DESC LIMIT 5";
-$sentRankResultPositive = mysqli_query($conn, $sentRankingQueryPositive) or die(mysqli_error($conn)); 
-
-$sentRankingQueryNegative = "SELECT positive, negative, m.name, m.movieId FROM `sentrank` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId ORDER BY negative DESC LIMIT 5";
-$sentRankResultNegative = mysqli_query($conn, $sentRankingQueryNegative) or die(mysqli_error($conn)); 
-
-$ratingRankingQueryPositive = "SELECT average, m.name, m.movieId FROM `averagerating` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId WHERE average<>'0' ORDER BY average DESC LIMIT 5";
-$ratingRankResultPositive = mysqli_query($conn, $ratingRankingQueryPositive) or die(mysqli_error($conn)); 
-
-$ratingRankingQueryNegative = "SELECT average, m.name, m.movieId FROM `averagerating` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId WHERE average<>'0' ORDER BY average ASC LIMIT 5";
-$ratingRankResultNegative = mysqli_query($conn, $ratingRankingQueryNegative) or die(mysqli_error($conn)); 
+//recent
+$datefile = file_get_contents("includes/recentDate.txt");
+$formattedRecentDate = $datefile;
 
 
+//p=metric trend/sentiment/rating
+$p="rating";
+$sentSort="pos";
+$ratingSort="des";
+$view="list";
+$genre="All";
+$searchName="";
+//if theatre=moviethen it shows all movies
+$movie="theatre";
 
+if(isset($_GET['movie'])){
+	$movie=$_GET['movie'];
+}
+
+//queries
+$sentRankingQuery = "SELECT positive, negative, m.name, m.movieId, n.plot,n.genre FROM `sentrank` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId INNER JOIN `movieinfo` as n on i.movieId = n.movieId ";
+$ratingRankingQuery = "SELECT average, m.name, m.movieId, n.plot,n.genre FROM `averagerating` AS i INNER JOIN `moviename` as m on i.movieId = m.movieId INNER JOIN `movieinfo` as n on i.movieId = n.movieId ";
+
+
+if($movie=="theatre"){
+	$sentRankingQuery.="INNER JOIN `intheatres` as t on m.movieId=t.movieId ";
+	$ratingRankingQuery.="INNER JOIN `intheatres` as t on m.movieId=t.movieId ";
+} 
+
+$sentRankingQuery.="WHERE 1=1 ";
+//$ratingRankingQuery.="WHERE average<>'0' ";
+$ratingRankingQuery.="WHERE 1=1 ";
+
+if ($movie == "recent"){
+	$sentRankingQuery.="AND releaseDate = '$formattedRecentDate'";
+	$ratingRankingQuery.="AND releaseDate = '$formattedRecentDate'";
+}
+
+if(isset($_GET['genre'])){
+	$genre=$_GET['genre'];
+	if($genre!="All"){
+		$sentRankingQuery.="AND genre LIKE '%$genre%'";
+		$ratingRankingQuery.="AND genre LIKE '%$genre%'";
+	}
+}
+
+if(isset($_GET['searchName'])){
+	$searchName=str_replace(" ", "+", trim($_GET['searchName']));
+	$sentRankingQuery.="AND m.movieId LIKE '%$searchName%'";
+	$ratingRankingQuery.="AND m.movieId LIKE '%$searchName%'";
+}
+
+if(isset($_GET['p'])){
+	$p=$_GET['p'];
+}
+
+if($p=="sentiment"){
+	if(isset($_GET['sentSort'])){
+		$sentSort=$_GET['sentSort'];
+	}
+	if($sentSort=="pos" || empty($sentSort)){
+		$sentRankingQuery.=" ORDER BY positive DESC";
+	} else if ($sentSort=="neg"){
+		$sentRankingQuery.=" ORDER BY negative DESC";
+	}
+}
+
+if($p=="rating"){
+	if(isset($_GET['ratingSort'])){
+		$ratingSort=$_GET['ratingSort'];
+	}
+	if($ratingSort=="asc"){
+		$ratingRankingQuery.=" ORDER BY average ASC";
+	} else if ($ratingSort=="des" || empty($ratingSort)){
+		$ratingRankingQuery.=" ORDER BY average DESC";
+	}
+	
+}
+
+
+
+if(isset($_GET['view'])){
+	$view=$_GET['view'];
+}
+
+
+
+$sentRankResult = mysqli_query($conn, $sentRankingQuery) or die(mysqli_error($conn)); 
+$ratingRankResult= mysqli_query($conn, $ratingRankingQuery) or die(mysqli_error($conn)); 
+
+$chosenResult = $p=="sentiment" ? $sentRankResult : $ratingRankResult;
+$chosenSort= $p=="sentiment" ? $sentSort : $ratingSort;
+$dataLayer = generateDataLayer($chosenResult, $p, $view, $genre, $movie, $chosenSort, $searchName);
+
+mysqli_data_seek($ratingRankResult,0);
+mysqli_data_seek($sentRankResult,0);
 ?>
+
 
 
 	
 
-
+<!DOCTYPE html>
+<?php require('includes/head.php'); ?>
 <html>
-<?php 
-require('includes/navbar.php');
-require('includes/string.php');
-?>
-
 
 <body>
 
+<script type="text/javascript">
+//datalayer information- just make php list variable and use it here
 
+dataLayer = <?php echo $dataLayer; ?>;
 
+</script>
 
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K4D47X"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K4D47X');</script>
+<!-- End Google Tag Manager -->
 
-<!-- Sidebar -->
-        <!--<div id="sidebar-wrapper" class = "rightStick">
+<?php require('includes/navbar.php'); ?>
+<div id="wrapper" style = "padding-left: 300px;">
+
+        <!-- Sidebar -->
+        <div class = "formHover" id="sidebar-wrapper" style = "width: 300px; padding-left: 15px;">
             <ul class="sidebar-nav">
-                	<?php 
-			mysqli_data_seek($result,0);//return to 0th index
-			while ($row = mysqli_fetch_array($result)){?>
-				<a href = "#<?php 
-					$id = str_replace(' ', '-', $row['name']);
-					echo $id;
-				?>"><?php echo $row['name']."<br>";?></a>
-			<?php }?>
+            	<br>
+                <!--<li class="sidebar-brand">
+                    <h4><br>
+                        Theatre Releases
+                    </h4>
+                </li>-->
+                <br>					
+                <div id = "topMenu">													
+                <li class = "<?php if($movie=="theatre"||empty($p))echo"menuActive";?>">
+                	<a id = "theatre" onclick="movieClick(this.id); categoryEvent('theatre')">Theatre releases</a>
+                </li>
+                <li class = "<?php if($movie=="recent")echo"menuActive";?>">
+                	<a id = "recent" onclick="movieClick(this.id); categoryEvent('recent')">Recently released</a>
+                </li>
+                <li class = "<?php if($movie=="movie")echo"menuActive";?>">
+                	<a id = "movie" onclick="movieClick(this.id); categoryEvent('all')">All movies</a>
+                </li>	
+                </div>								
+                <hr>
+
+               
+                <li class = "<?php if($p=="sentiment")echo"menuActive";?>">
+                    <a id = "sentiment" onclick = "pClick(this.id); metricEvent('sentiment')">Twitter sentiment<span class="glyphicon glyphicon-play"></span></a>
+                </li>
+                <li class = "<?php if($p=="rating")echo"menuActive";?>">
+                    <a id = "rating" onclick = "pClick(this.id); metricEvent('rating')">Rating <span class="glyphicon glyphicon-play"></span></a>
+                </li>
+                <hr>
+
+
+                <form class="form" method = "get">
+				  <div class="form-group">
+				    <input type="text" class="form-control" id="searchNameHome" placeholder="Search for movies">
+				  </div>
+				  <a style = "curser:pointer" class="btn btn-default" onclick="searchClick(); searchEvent()">Search</a>
+				</form>	
+				<hr>
+
+                <div id = "menu">
+                <p>
+                        Genre
+                </p>	
+                <li>
+                    <a id="All" onclick = "genreClick(this.id); genreEvent(this.id)">All</a>
+                </li>
+                <li>
+                    <a id="Action" onclick = "genreClick(this.id); genreEvent(this.id)">Action</a>
+                </li>
+                <li>
+                    <a id="Comedy" onclick = "genreClick(this.id); genreEvent(this.id)">Comedy</a>
+                </li>
+                <li>
+                    <a id="Family" onclick = "genreClick(this.id); genreEvent(this.id)">Family</a>
+                </li>
+                <li>
+                    <a id="Musical" onclick = "genreClick(this.id); genreEvent(this.id)">Musical</a>
+                </li>
+                <li>
+                   <a id="Adventure" onclick = "genreClick(this.id); genreEvent(this.id)">Adventure</a>
+                </li>
+                <li>
+                    <a id="Crime" onclick = "genreClick(this.id); genreEvent(this.id)">Crime</a>
+                </li>
+                <li>
+                    <a id="Mystery" onclick = "genreClick(this.id); genreEvent(this.id)">Mystery</a>
+                </li>
+                <li>
+                    <a id="Fantasy" onclick = "genreClick(this.id); genreEvent(this.id)">Fantasy</a>
+                </li>
+                <li>
+                    <a id="Thriller" onclick = "genreClick(this.id); genreEvent(this.id)">Thriller</a>
+                </li>
+                <li>
+                    <a id="Sport" onclick = "genreClick(this.id); genreEvent(this.id)">Sport</a>
+                </li>
+                <li>
+                    <a id="Animation" onclick = "genreClick(this.id); genreEvent(this.id)">Animation</a>
+                </li>
+                <li>
+                    <a id="Documentary" onclick = "genreClick(this.id); genreEvent(this.id)">Documentary</a>
+                </li>
+                <li>
+                    <a id="History" onclick = "genreClick(this.id); genreEvent(this.id)">History</a>
+                </li>
+                <li>
+                    <a id="Romance" onclick = "genreClick(this.id); genreEvent(this.id)">Romance</a>
+                </li>
+                <li>
+                    <a id="War" onclick = "genreClick(this.id); genreEvent(this.id)">War</a>
+                </li>
+                 <li>
+                    <a id="Biography" onclick = "genreClick(this.id); genreEvent(this.id)">Biography</a>
+                </li>
+                <li>
+                    <a id="Drama" onclick = "genreClick(this.id); genreEvent(this.id)">Drama</a>
+                </li>
+                <li>
+                    <a id="Horror" onclick = "genreClick(this.id); genreEvent(this.id)">Horror</a>
+                </li>
+                <li>
+                    <a id="Sci-Fi" onclick = "genreClick(this.id); genreEvent(this.id)">Sci-Fi</a>
+                </li>
+                <li>
+                    <a id="Western" onclick = "genreClick(this.id); genreEvent(this.id)">Western</a>
+                </li>
+               	</div>
             </ul>
-        </div>-->
+        </div>
         <!-- /#sidebar-wrapper -->
 
+        <section class = "bg-white" style = "padding-left:20px; padding-right:10px; padding-top:50px" >
+		<div class="row">
+			<div class="col-lg-12">
+    		<div class="tab-content">
 
-<!--<div class = "row"  >	
-	<div class = "container-medium" >
+    			<?php 
+    			//echo $ratingRankingQuery;
+    			if($p=="rating"||$p=="sentiment"){
+    			?>
+    			<div role="tabpanel" id="rating">
+    				<div class = "row">
+    					<div class = "col-xs-12">
+    						<?php
+    						if($p=="rating"||empty($p)){
+    							echo '<h3>Average rating today</h3>';
+    						} else if($p=="sentiment"){
+    							echo '<h3>Sentiment today</h3>';
+    						}
 
-	<div class = "jumbotron">
-		<h1>Find subtitles for the latest movies</h1>
-	</div>
+    						switch($movie){
+    							case "theatre":
+    								echo "Theatre releases";
+    								break;
+    							case "":
+    								echo "Theatre releases";
+    								break;
+    							case "recent":
+    								echo "Recently Released";
+    								break;
+    							case "movie":
+    								echo "All movies";
+    								break;
 
-	<div class = "">
-		
-		<?php //require("content/displayMovies.php");?>		
+    						}
 
-		
+    						echo " | ";
+    						if(empty($genre)||$genre=="All"){
+    							echo "Showing All genres";
+    						} else{
+	    						echo "Showing ".$genre." genre";
+	    					}
 
-	</div>
-	</div>
-<!--end row-->
-<!--</div>-->
+	    					echo " | Sort: ";
+	    					if($p=="rating" || empty ($p)){
+	    						if($ratingSort=="asc"){
+	    							echo "Ascending";
+	    						} else {
+	    							echo "Descending";
+	    						}
+	    					} else if ($p=="sentiment"){
+	    						if($sentSort=="neg"){
+	    							echo "Negative tweets";
+	    						} else {
+	    							echo "Positive tweets";
+	    						}
+	    					}
+    						
+    						echo " | Search: ";
+    						echo $searchName;
 
+    						?>	
+    						
 
+    						<div class = "form-inline">
+    						<div class="dropdown" style = "display:inline">
+							  <a class="dropdown-toggle btn btn-default" data-toggle="dropdown" href="#" >Sort <span class="caret"></span></a>
+							  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
 
-
-        	<div style = "margin-top: 50px"></div>
-        
-            	<div class = "jumbotron">
-					<h1>Find subtitles for the latest movies</h1>
-					<p><?php 
-
-					if(isset($_GET['genre'])){
-						if($genre!="All"){
-							echo $_GET['genre'];
-						}
-					}
-					?></p>
-					 
-					 <form class="form-inline" action = "movies.php" method = "get">
-					
-
-					  <div class="form-group">
-					   
-					    <input type="text" class="form-control" name = "searchName" placeholder="Search for movies">
-					  </div>
-					  <input type="submit" class="btn btn-default" value = "Search"></button>
-					</form>					 
-
-					<form class="navbar-form navbar-left form-inline" role="search" action = "movieShowtimes.php"
-					  method = "get">
-						 	<div class = "form-group">Display showtimes</div>
-						 	<div class = "form-group">
-							<select class="form-control" id = "movie" name = "movie" required>
-								<option value="All">All movies</option>
-								<!--<option value="Afganistan">Afghanistan</option>-->
-								<?php
-									$theatreQuery = "SELECT * FROM `movieinfo` AS i INNER JOIN `intheatres` AS t on i.movieId = t.movieId WHERE 1=1";
-									$theatreResult = mysqli_query($conn, $theatreQuery);
-									mysqli_data_seek($theatreResult,0);//return to 0th index
-									while ($row = mysqli_fetch_array($theatreResult))//redundant
-									{			
-										$movieNameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$row['movieId']."'";
-										$movieNameResult = mysqli_query($conn, $movieNameQuery);
-
-										if(!$movieNameResult)
-										{
-											continue;
-										}
-
-										$movieNameRow = mysqli_fetch_array($movieNameResult);
-										echo '<option value="'.$movieNameRow['name'].'">'.$movieNameRow['name'].'</option>';
-									}
-
+							  	<?php 
+							  	if($p=="rating" || empty($p)){
+							  	?>
+								    <li style = "cursor: pointer;">
+								    	<a id="asc" onclick="ratingClick(this.id); sortEvent('Rating', 'Ascending')">Sort ascending</a>
+								    </li>
+								    <li style = "cursor: pointer;">
+								    	<a id="des" onclick="ratingClick(this.id); sortEvent('Rating', 'Descending')">Sort descending</a>
+								    </li>
+								<?php 
+								} else {
 								?>
+								<li style = "cursor: pointer;">
+							    	<a id="pos" onclick="sentClick(this.id); sortEvent('Sentiment', 'Positive')">Sort by Positive tweets</a>
+							    </li>
+							    <li style = "cursor: pointer;">
+							    	<a id="neg" onclick="sentClick(this.id); sortEvent('Sentiment', 'Negative')">Sort by Negative tweets</a>
+							    </li>
+							    <?php 
+								}	
+								?>
+
+							  </ul>
+							</div>
+
+							<div style = "display:inline">
+							    <a class = "btn btn-default" id="list" onclick="viewClick(this.id); viewEvent('list')">List view  <span class = "glyphicon glyphicon-list"></span></a>
+							    <a class = "btn btn-default" id="grid" onclick="viewClick(this.id); viewEvent('grid')">Grid view  <span class = "glyphicon glyphicon-th-large"></span></a>
+							</div>
+							</div>
+							<br>
+    						
+    						<?php 
+    						$finalResult="";
+							if($p=="rating"||empty($p)){
+								$finalResult=$ratingRankResult;
+							} else if ($p=="sentiment"){
+								$finalResult=$sentRankResult;
+							}
+							
+    						if($view=="list"||empty($view)){
+    						?>
+    							<ul class="list-group">
+								<?php 
+								//$movie['title'].'<br>'. $movie['description']['description']
 								
-							</select>
-						</div>
-					        
-					        <div class="form-group">
-					          <input name = "date" type="date" class="form-control">
-					        </div>
+								while($row = mysqli_fetch_array($finalResult)){
 
-					        <div class="form-group">
-					        	<!--hidden because value is php postcode but it will still be passed as param to url-->
-					          <input type="hidden" name="postcode" value="<?php echo $postcode; ?>">
-					        </div>
-					        
-
-					        <button type="submit" class="btn btn-default">Display showtimes near me</button>
-					      </form>
-						<br><br>
-					
-
-
-				</div>
-
-				<div class = "row">			
-					<div class = "col-xs-6">
-						<div class="panel panel-default">
-						  <div class="panel-heading">
-						    <h3 class="panel-title">Most positive tweets today</h3>
-						  </div>
-						  <div class="panel-body">
-						  		<table class="table table-hover table-condensed">
-						  			<tr><th style= "text-align: center">Name</th><th style= "text-align: center">Number of positive tweets</th></tr>
-								<?php
-									while($row = mysqli_fetch_array($sentRankResultPositive)){
-										echo'<tr><td><a class="" href="movieInfo.php?movieId='.urlencode($row['movieId']).'">'.$row['name'].'</a></td><td>'.$row['positive'].'</td></tr>';
-									}
-
-								?>
-								</table>
-						  </div>
-						</div>
-						
-					</div>
-					<div class = "col-xs-6">
-						<div class="panel panel-default">
-						  <div class="panel-heading">
-						    <h3 class="panel-title">Most negative tweets today</h3>
-						  </div>
-						  <div class="panel-body">
-						  		<table class="table table-hover table-condensed">
-						  			<tr><th style= "text-align: center">Name</th><th style= "text-align: center">Number of negative tweets</th></tr>
-								<?php
-									while($row = mysqli_fetch_array($sentRankResultNegative)){
-										echo'<tr><td><a class="" href="movieInfo.php?movieId='.urlencode($row['movieId']).'">'.$row['name'].'</a></td><td>'.$row['negative'].'</td></tr>';
-									}
-
-								?>
-								</table>
-						  </div>
-						</div>
-						
-					</div>
-				</div>
-
-
-				<div class = "row">			
-					<div class = "col-xs-6">
-						<div class="panel panel-default">
-						  <div class="panel-heading">
-						    <h3 class="panel-title">Highest average rating today</h3>
-						  </div>
-						  <div class="panel-body">
-						  		<table class="table table-hover table-condensed">
-						  			<tr><th style= "text-align: center">Name</th><th style= "text-align: center">Rating</th></tr>
-								<?php
-								
-									while($row = mysqli_fetch_array($ratingRankResultPositive)){
-										echo'<tr><td><a class="" href="movieInfo.php?movieId='.urlencode($row['movieId']).'">'.$row['name'].'</a></td><td>'.$row['average'].'</td></tr>';
-								
-									}
-
-								?>
-								</table>
-						  </div>
-						</div>
-						
-					</div>
-					<div class = "col-xs-6">
-						<div class="panel panel-default">
-						  <div class="panel-heading">
-						    <h3 class="panel-title">Lowest average rating today</h3>
-						  </div>
-						  <div class="panel-body">
-						  		<table class="table table-hover table-condensed">
-						  			<tr><th style= "text-align: center">Name</th><th style= "text-align: center">Rating</th></tr>
-								<?php
-									while($row = mysqli_fetch_array($ratingRankResultNegative)){
-										echo'<tr><td><a class="" href="movieInfo.php?movieId='.urlencode($row['movieId']).'">'.$row['name'].'</a></td><td>'.$row['average'].'</td></tr>';
-									}
-
-								?>
-								</table>
-						  </div>
-						</div>
-						
-					</div>
-				</div>
-
-                <div class="row">
-
-                    <div class="col-lg-12">
-                    	<section class = "bg-light-gray" style = "margin-bottom:9px; padding-left:30px"><h2>Movies  <a href = "movies.php"><input class="btn btn-default" type="button" value="View all"></a></h2></section>
-                        <?php
-                        	$i = 0;
-							mysqli_data_seek($genreResult,0);//return to 0th index
-							while ($row = mysqli_fetch_array($genreResult))//redundant
-										
-								{
-									
 									$movieNameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$row['movieId']."'";
 									$movieNameResult = mysqli_query($conn, $movieNameQuery);
-
+									
 									if(!$movieNameResult)
 									{
 										continue;
 									}
 
-									$movieNameRow = mysqli_fetch_array($movieNameResult);
+									$filename = 'poster/'.normalize($row['movieId']).'.jpg';
+				            		if(!file_exists($filename)){
+				            			continue;
+				            		}
 
-									$tomatoQuery = "SELECT * FROM `tomato` WHERE movieId = '".$row['movieId']."'";
-									$tomatoResult = mysqli_query($conn, $tomatoQuery);
-									$tomatoRow = mysqli_fetch_array($tomatoResult);
+									echo '<li class="list-group-item">';
+										echo '<div class = "row">';
+											echo '<div class = "col-xs-1">';
+											//poster
+											?>
+											<div class = "miniPoster">
+											<img src="
+				                    		<?php 
+				                    		$filename = 'poster/'.normalize($row['movieId']).'.jpg';
+				                    		if(file_exists($filename)){
+				                    			echo $filename;
+				                    		}
+				                    		?>
+				                    		" alt = "<?php echo $row['name']; ?>"></img></div>
+											<?php
+											echo '</div>';
+											echo '<div class = "col-xs-11">';
+											//text
+											echo '<a class="" href="movieInfo.php?movieId='.urlencode($row['movieId']).'" onclick="movieEvent('.$row['movieId'].')">'.$row['name'].'</a><br>';
+											if($p=="rating"||empty($p)){
+												if($row['average']==0){
+													echo "Rating: not calculated<br>";
+												} else {
+													echo "Rating: ".$row['average']."<br>";
+												}
+											} else if($p=="sentiment"){
+												if($sentSort=="neg" ){
+													echo "Number of negative tweets: ".$row['negative']."<br>";
+												} else if($sentSort=="pos" || empty($sentSort)){
+													echo "Number of positive tweets: ".$row['positive']."<br>";
+												}
+											}
+											echo "Genre: ".$row['genre']."<br>";
+											echo substr($row['plot'], 0,200)."...";
 
-
-									$imdbQuery = "SELECT * FROM `imdb` WHERE movieId = '".$row['movieId']."'";
-									$imdbResult = mysqli_query($conn, $imdbQuery);
-									$imdbRow = mysqli_fetch_array($imdbResult);
-
-									$linkQuery = "SELECT * FROM `links` WHERE movieId = '".$row['movieId']."'";
-									$linkResult = mysqli_query($conn, $linkQuery);
-									$linkRow = mysqli_fetch_array($linkResult);
-								 	
-								 	$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '".$row['movieId']."'";
-									$averageRatingResult = mysqli_query($conn, $averageRatingQuery);
-									$averageRatingRow = mysqli_fetch_array($averageRatingResult);
-									$average = $averageRatingRow['average'];
-								  
-									?>						
-
-									<div class="col-lg-15 col-md-3 col-sm-4 col-xs-6 thumb " >
-										<!--need urlencode because by default "+" is translated to " " in get requests-->
-										<a class="" href="movieInfo.php?movieId=<?php echo urlencode($row['movieId']);?>">
-					                    	<img id = "stacked" class="img-responsive   " 
-					                    		data-caption="
-					                    			<?php 
-					                    				echo $movieNameRow['name'];
-					                    				echo '<br>';
-					                    				echo $row['genre'];
-					                    				echo '<br>';
-					                    				echo 'Average Rating:'." ".$average;
-					                    				?>" 
-					                    		src="<?php 
-						                    		$filename = 'poster/'.normalize($row['movieId']).'.jpg';
-						                    		if(file_exists($filename)){
-						                    			echo $filename;
-						                    		}
-						                    		?>
-						                    		" alt="" 
-					                    		>		           
-						                </a>   
-									</div>
-
-						<?php 
-						$i++;
-						if($i == 5)
-						{
-							break;
-						}
-						} ?>	
-                       
-                    </div>
-                </div>
-
-
-
-
-
-
-
-                <!--tvshow-->
-                 <div class="row">
-                    <div class="col-lg-12">
-                    	<section class = "bg-light-gray" style = "margin-bottom:9px; padding-left:30px"><h2>Latest TV shows  <a href = "todayShows.php"><input class="btn btn-default" type="button" value="View all"></a></h2></section>
-                    	<?php 
-                    	$j = 0;
-                    	mysqli_data_seek($showResult,0);//return to 0th index
-						while ($row = mysqli_fetch_array($showResult)){
-                    	?>
-                         <div class="col-lg-15 col-md-3 col-sm-4 col-xs-6 thumb " >
-				            <!--need urlencode because by default "+" is translated to " " in get requests-->
-				            <a class="" href="showInfo.php?showName=<?php echo $row['episodeName'];?>">
-				                        <img id = "stacked" class="img-responsive   " 
-				                          data-caption="
-				                            <?php 
-				                              echo $row['episodeName'];
-				                              echo '<br>';
-				                              echo $row['showName'];
-				                              echo '<br>';
-				                              echo "S".$row['season']. "E".$row['number'];
-				                              echo '<br>';
-				                              echo "Show average rating: ".$row['showAverageRating'];
-				                             
-				                              ?>" 
-				                          src="<?php echo $row['image'];?>" alt="" >              
-				                    </a>   
-				          </div>
-				          <?php 
-				          	$j++;
-				          	if($j == 5){
-				          		break;
-				          	}	
-				      		} 
-				          ?>
-
-
-
-
-
-                       
-                    </div>
-                </div>
-
-
-
-            	
-
-
-
-
-
-
-
-            	<div class="row">
-
-                    <div class="col-lg-12">
-                    	<section class = "bg-light-gray" style = "margin-bottom:9px; padding-left:30px"><h2>Recently Released  <a href = "recent.php"><input class="btn btn-default" type="button" value="View all"></a></h2></section>
-                        <?php
-                        	$i = 0;
-							mysqli_data_seek($recentResult,0);//return to 0th index
-							while ($row = mysqli_fetch_array($recentResult))//redundant
-										
-								{
+											echo '</div>';
+											
+										echo '</div>';
+									echo '</li>';
 									
+								}
+								?>
+								</ul>
+							<?php
+							} else {
+								while ($row = mysqli_fetch_array($finalResult))//redundant
+								{
 									$movieNameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$row['movieId']."'";
 									$movieNameResult = mysqli_query($conn, $movieNameQuery);
-
+									
 									if(!$movieNameResult)
 									{
 										continue;
 									}
 
-									$movieNameRow = mysqli_fetch_array($movieNameResult);
+									$filename = 'poster/'.normalize($row['movieId']).'.jpg';
+				            		if(!file_exists($filename)){
+				            			continue;
+				            		}
 
-									$tomatoQuery = "SELECT * FROM `tomato` WHERE movieId = '".$row['movieId']."'";
-									$tomatoResult = mysqli_query($conn, $tomatoQuery);
-									$tomatoRow = mysqli_fetch_array($tomatoResult);
 
-
-									$imdbQuery = "SELECT * FROM `imdb` WHERE movieId = '".$row['movieId']."'";
-									$imdbResult = mysqli_query($conn, $imdbQuery);
-									$imdbRow = mysqli_fetch_array($imdbResult);
-
-									$linkQuery = "SELECT * FROM `links` WHERE movieId = '".$row['movieId']."'";
-									$linkResult = mysqli_query($conn, $linkQuery);
-									$linkRow = mysqli_fetch_array($linkResult);
-								 	
-								 	$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '".$row['movieId']."'";
+									$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '".$row['movieId']."'";
 									$averageRatingResult = mysqli_query($conn, $averageRatingQuery);
 									$averageRatingRow = mysqli_fetch_array($averageRatingResult);
 									$average = $averageRatingRow['average'];
+											//  echo $average;
+								
 								  
-									?>						
-
+									?>
 									<div class="col-lg-15 col-md-3 col-sm-4 col-xs-6 thumb " >
 										<!--need urlencode because by default "+" is translated to " " in get requests-->
-										<a class="" href="movieInfo.php?movieId=<?php echo urlencode($row['movieId']);?>">
+										<a class="" href="movieInfo.php?movieId=<?php echo urlencode($row['movieId']);?>" onclick="movieEvent(<?php echo $row['name']; ?>)">
 					                    	<img id = "stacked" class="img-responsive   " 
 					                    		data-caption="
 					                    			<?php 
-					                    				echo $movieNameRow['name'];
+					                    				echo $row['name'];
 					                    				echo '<br>';
 					                    				echo $row['genre'];
 					                    				echo '<br>';
-					                    				echo 'Average Rating:'." ".$average;
+					                    				if($p=="rating"||empty($p)){
+															echo "Rating: ".$row['average']."<br>";
+														} else if($p=="sentiment"){
+															if($sentSort=="neg" ){
+																echo "Number of negative tweets: ".$row['negative']."<br>";
+															} else if($sentSort=="pos" || empty($sentSort)){
+																echo "Number of positive tweets: ".$row['positive']."<br>";
+															}
+														}
 					                    				?>" 
-					                    		src="<?php 
-						                    		$filename = 'poster/'.normalize($row['movieId']).'.jpg';
-						                    		if(file_exists($filename)){
-						                    			echo $filename;
-						                    		}
-						                    		?>
-						                    		"  alt="" 
+					                    		src="
+					                    		<?php 
+					                    			echo $filename;
+					                    		?>
+					                    		" alt="<?php echo $row['name']; ?>" 
 					                    		>		           
 						                </a>   
 									</div>
+									<?php 
+									} 
 
-						<?php 
-						$i++;
-						if($i == 5)
-						{
-							break;
-						}
-						} ?>	
-                       
-                    </div>
-                </div>
+							}
+							?>	
+    					</div>
+    				</div>
+    			</div>
+    			<?php 
+    			}
+    			?>
 
+    		</div>
+	        </div>
+	    </div>
+        </section>
+ 
+</div>
+<!-- /#wrapper -->
 
-
-
-
-
-
-
-                <div class="row">
-
-                    <div class="col-lg-12">
-                    	<section class = "bg-light-gray" style = "margin-bottom:9px; padding-left:30px"><h2>In Theatres   <a href = "theatre.php"><input class="btn btn-default" type="button" value="View all"></a></h2></section>
-                        <?php
-                        	$i = 0;
-							mysqli_data_seek($theatreResult,0);//return to 0th index
-							while ($row = mysqli_fetch_array($theatreResult))//redundant
-										
-								{
-									
-									$movieNameQuery = "SELECT * FROM `moviename` WHERE movieId = '".$row['movieId']."'";
-									$movieNameResult = mysqli_query($conn, $movieNameQuery);
-
-									if(!$movieNameResult)
-									{
-										continue;
-									}
-
-									$movieNameRow = mysqli_fetch_array($movieNameResult);
-
-									$tomatoQuery = "SELECT * FROM `tomato` WHERE movieId = '".$row['movieId']."'";
-									$tomatoResult = mysqli_query($conn, $tomatoQuery);
-									$tomatoRow = mysqli_fetch_array($tomatoResult);
-
-
-									$imdbQuery = "SELECT * FROM `imdb` WHERE movieId = '".$row['movieId']."'";
-									$imdbResult = mysqli_query($conn, $imdbQuery);
-									$imdbRow = mysqli_fetch_array($imdbResult);
-
-									$linkQuery = "SELECT * FROM `links` WHERE movieId = '".$row['movieId']."'";
-									$linkResult = mysqli_query($conn, $linkQuery);
-									$linkRow = mysqli_fetch_array($linkResult);
-								 	
-								 	$averageRatingQuery = "SELECT average FROM `averagerating` WHERE movieId = '".$row['movieId']."'";
-									$averageRatingResult = mysqli_query($conn, $averageRatingQuery);
-									$averageRatingRow = mysqli_fetch_array($averageRatingResult);
-									$average = $averageRatingRow['average'];
-								  
-									?>						
-
-									<div class="col-lg-15 col-md-3 col-sm-4 col-xs-6 thumb " >
-										<!--need urlencode because by default "+" is translated to " " in get requests-->
-										<a class="" href="movieInfo.php?movieId=<?php echo urlencode($row['movieId']);?>">
-					                    	<img id = "stacked" class="img-responsive   " 
-					                    		data-caption="
-					                    			<?php 
-					                    				echo $movieNameRow['name'];
-					                    				echo '<br>';
-					                    				echo $row['genre'];
-					                    				echo '<br>';
-					                    				echo 'Average Rating:'." ".$average;
-					                    				?>" 
-					                    		src="<?php 
-						                    		$filename = 'poster/'.normalize($row['movieId']).'.jpg';
-						                    		if(file_exists($filename)){
-						                    			echo $filename;
-						                    		}
-						                    		?>
-						                    		"  alt="" 
-					                    		>		           
-						                </a>   
-									</div>
-
-						<?php 
-						$i++;
-						if($i == 5)
-						{
-							break;
-						}
-						} ?>	
-                       
-                    </div>
-                </div>
-     
-
-
-
-
-
-
-
-
+            
 <img src="phpjobscheduler/firepjs.php?return_image=1" border="0" alt="phpJobScheduler">
 
         
-	
 
 
+
+</script>
 
 
 	<!-- Scrolling Nav JavaScript -->
 	
     
     <script src = "js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+    function genreClick(clickedId){
+			var gen = location.search.split('genre=')[1] ? location.search.split('genre=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&genre=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&genre=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("genre", url);
+					
+					altered = altered.concat("&genre=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+	function removeParam(key, sourceURL) {
+		    var rtn = sourceURL.split("?")[0],
+		        param,
+		        params_arr = [],
+		        queryString = (sourceURL.indexOf("?") !== -1) ? sourceURL.split("?")[1] : "";
+		    if (queryString !== "") {
+		        params_arr = queryString.split("&");
+		        for (var i = params_arr.length - 1; i >= 0; i -= 1) {
+		            param = params_arr[i].split("=")[0];
+		            if (param === key) {
+		                params_arr.splice(i, 1);
+		            }
+		        }
+		        rtn = rtn + "?" + params_arr.join("&");
+		    }
+		    return rtn;
+		}	
+
+
+		function movieClick(clickedId){
+
+			var gen = location.search.split('movie=')[1] ? location.search.split('movie=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					//reset search
+					if (url.indexOf('searchName') > -1){
+						altered = removeParam("searchName", url);
+					}
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&movie=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&movie=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("movie", url);
+					//reset search
+					if (url.indexOf('searchName') > -1){
+						altered = removeParam("searchName", url);
+					}
+
+					altered = altered.concat("&movie=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+		function sentClick(clickedId){
+			var gen = location.search.split('sentSort=')[1] ? location.search.split('sentSort=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&sentSort=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&sentSort=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("sentSort", url);
+					
+					altered = altered.concat("&sentSort=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+		function viewClick(clickedId){
+			var gen = location.search.split('view=')[1] ? location.search.split('view=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&view=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&view=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("view", url);
+					
+					altered = altered.concat("&view=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+		function ratingClick(clickedId){
+			var gen = location.search.split('ratingSort=')[1] ? location.search.split('ratingSort=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&ratingSort=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&ratingSort=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("ratingSort", url);
+					
+					altered = altered.concat("&ratingSort=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+		function pClick(clickedId){
+			var gen = location.search.split('p=')[1] ? location.search.split('p=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&p=").concat(clickedId);
+					} else {
+						//no question mark
+						altered = altered.concat("?&p=").concat(clickedId);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("p", url);
+					
+					altered = altered.concat("&p=").concat(clickedId);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+
+	function searchClick(){
+			var searchText = document.getElementById('searchNameHome').value;
+			var gen = location.search.split('searchName=')[1] ? location.search.split('searchName=')[1] : 'undef';
+				if(gen == 'undef'){
+					var url = window.location.href;
+					var altered = url;
+					
+
+					if (url.indexOf('?') > -1){
+						//has question mark
+						altered = altered.concat("&searchName=").concat(searchText);
+					} else {
+						//no question mark
+						altered = altered.concat("?&searchName=").concat(searchText);
+					}
+					//alert(altered);
+					//go to url
+					window.location.href=  altered;
+				} else {
+					var url = window.location.href;
+					var altered = removeParam("searchName", url);
+					
+					altered = altered.concat("&searchName=").concat(searchText);
+					//alert(altered);
+					//append to url
+					window.location.href=  altered;
+				}
+			
+
+		}
+
+
+	//adds active class if the button clicked has same name as $_GET['genre']
+	$(document).ready(function () {
+		$( "#menu a" ).addClass(function(){
+			console.log($(this).text());
+			if($(this).text()=== "<?php echo $genre; ?>"){
+				return "menuActive";
+			}
+			else {
+				return;
+			}
+		});
+	});
+
+
+	//Datalayer events
+
+	/*
+	generic code (need to map our own fields to each of these 5 event tracking fields)
+
+	<!-- Snowplow event tracking -->
+	<script type="text/javascript">
+	window.snowplow('trackStructEvent', {{CATEGORY}}, {{ACTION}}, {{LABEL}}, {{PROPERTY}}, {{VALUE}});
+	/script>
+	VALUE is usually associated with price
+
+	e.g. window.snowplow('trackStructEvent', 'video', 'playVideo', {{videoId}}, {{videoFormat}}, '0.0');
+	(PASTE THIS INTO GOOGLE TAG MANAGER, for {{videoId}} and {{videoFormat}} remember to create a macro or else it wont work)
+	
+
+	Category	Yes	The name you supply for the group of objects you want to track e.g. 'media', 'ecomm'
+	Action		A string which defines the type of user interaction for the web object e.g. 'play-video', 'add-to-basket'
+	Label		An optional string which identifies the specific object being actioned e.g. ID of the video being played, or the SKU or the product added-to-basket
+	Property	An optional string describing the object or the action performed on it. This might be the quantity of an item added to basket
+	Value		An optional float to quantify or further describe the user action. This might be the price of an item added-to-basket, or the starting time of the video where play was just pressed
+	*/
+
+	//window.snowplow('trackStructEvent', 'sort', 'sortClick', {{sortType}}, {{sortValue}}, '0.0');
+	function sortEvent(sortType, sortValue){
+		dataLayer.push({
+		  'event': 'sortClick',
+		  'sortType': sortType,
+		  'sortValue': sortValue,
+		  
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'view', 'changeView', '0', {{viewType}}, '0.0');
+	function viewEvent(viewType){
+		dataLayer.push({
+		  'event': 'changeView',
+		  'viewType': viewType
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'genre', 'changeGenre', '0', {{genre}}, '0.0');
+	function genreEvent(genre){
+		dataLayer.push({
+		  'event': 'changeGenre',
+		  'genre': genre
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'search', 'searchClick', '0', {{searchValue}}, '0.0');
+	function searchEvent(){
+		var searchValue = document.getElementById('searchNameHome').value;
+		dataLayer.push({
+		  'event': 'searchClick',
+		  'searchValue': searchValue
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'movie', 'movieClick', '0', {{movieId}}, '0.0');
+	function movieEvent(movieId){
+		dataLayer.push({
+		  'event': 'movieClick',
+		  'movieId': movieId
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'metric', 'changeMetric', '0', {{metric}}, '0.0');
+	function metricEvent(metric){
+		dataLayer.push({
+		  'event': 'changeMetric',
+		  'metric': metric
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'category', 'changeCategory', '0', {{category}}, '0.0');
+	function categoryEvent(category){
+		dataLayer.push({
+		  'event': 'changeCategory',
+		  'category': category
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'link', 'navLinkClick', '0', {{link}}, '0.0');
+	function navClickEvent(link){
+		dataLayer.push({
+		  'event': 'navLinkClick',
+		  'link': link
+		});
+	}
+
+	//window.snowplow('trackStructEvent', 'search', 'navSearchClick', '0', {{searchValue}}, '0.0');
+	function navSearchEvent(){
+		var searchValue = document.getElementById('searchNameNavbar').value;
+		dataLayer.push({
+		  'event': 'searchClick',
+		  'searchValue': searchValue
+		});
+	}
+	
+    </script>
+
+    <script>
+    $('.dropdown-toggle').dropdown();
+    </script>
+
    <script src="js/jquery.caption.js" type="text/javascript"></script>
     
     		<script type="text/javascript">
