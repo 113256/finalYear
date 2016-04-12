@@ -1,12 +1,12 @@
 <?php 
 
 require('../includes/connect.php');
-//require('../includes/string.php');
+//require('../functions/string.php');
 
 require("../functions/recentlyReleased.php");
 require('../functions/getTodayShow.php');
 require('../functions/updateSentiment.php');
-
+	
 error_reporting(E_ALL);
 ini_set('display_errors','On');
 ignore_user_abort(true);

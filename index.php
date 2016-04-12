@@ -2,8 +2,8 @@
 
 
 require('includes/connect.php');
-require('includes/generateDataLayer.php');
-require('includes/string.php');
+require('functions/generateDataLayer.php');
+require('functions/string.php');
 
 $details = json_decode(file_get_contents("http://ipinfo.io/"));
 $postcode=$details->postal; 

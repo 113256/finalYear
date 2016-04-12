@@ -9,7 +9,7 @@ function getRecent(){
 
 
 	require("../includes/connect.php");
-	//require("../includes/string.php");
+	//require("../functions/string.php");
 
 
 	

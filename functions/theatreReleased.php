@@ -1,10 +1,5 @@
-<?php 
-
-
-
+<?php
 function getTheatre(){
-
-
 
 	require("../includes/connect.php");
 	require("../functions/newMovie.php");
@@ -12,8 +7,6 @@ function getTheatre(){
 	//EMPTIES INTHEATRES         		
 	$truncateQuery = "TRUNCATE TABLE `intheatres`";	
 	mysqli_query($conn, $truncateQuery) or die(mysqli_error($conn));
-
-	
 	
 	$scrapeUrl = 'http://igoogle.flixster.com/igoogle/showtimes';
 	$text = file_get_contents($scrapeUrl);
@@ -56,7 +49,6 @@ function getTheatre(){
         	 	break;
         	 }
         }
-         
 
           if ($exists == 1){
           		echo "exists <br>";
@@ -83,22 +75,10 @@ function getTheatre(){
 					continue;
 				}
 	      		$theatreInsertQurey = "INSERT INTO `intheatres` (`movieId`, `code`) VALUES ('$movieId', '$code')";
-	      		mysqli_query($conn, $theatreInsertQurey) or die(mysqli_error($conn));
-      		
-
-
+	      		mysqli_query($conn, $theatreInsertQurey) or die(mysqli_error($conn));      		
           }
           echo "<br>";
-		                      
-          //break;
-	//end	
 	}
-
 //endfunction
 }
-
-
-
-
-
 ?>

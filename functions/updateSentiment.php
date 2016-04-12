@@ -4,7 +4,7 @@
 	function updateSentiment($i){
 
 		require("../includes/connect.php");
-		require("../includes/string.php");
+		require("../functions/string.php");
 
 		//empty ranking table      		
 		//$truncateQuery = "TRUNCATE TABLE `sentrank`";	

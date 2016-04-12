@@ -2,7 +2,7 @@
 
 
 require('../includes/connect.php');
-require('../includes/string.php');
+require('../functions/string.php');
 
 
 $allRatingQuery = "SELECT imdbRating, metaCriticScore, i.movieId, t.tomatoRating, t.tomatoUserRating FROM `imdb` AS i 

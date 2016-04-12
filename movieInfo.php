@@ -1,8 +1,8 @@
 <?php 
 require('includes/connect.php');
-require('includes/string.php');
-require("includes/chartData.php");
-require("includes/generateDataLayer.php");
+require('functions/string.php');
+require("functions/chartData.php");
+require("functions/generateDataLayer.php");
 
 $unwantedChars = array(',', '!', '?', "'", " ", ":", "+");
 
@@ -384,44 +384,7 @@ $(document).ready(function () {
 
 <!--newer ratings using nvd3-->
 
-<script>
 
-
- /*
- var testdata1 = [
-        {
-            "key" : "Rating" ,
-             "values" : [ <?php printChartData2(1, $imdbRow['imdbID']);?>],
-            "type":"bar",
-            "yAxis":1
-        },
-        {
-            "key" : "Votes" ,
-             "values" : [ <?php printChartData2(0, $imdbRow['imdbID']);?>],
-            "type":"bar",
-            "yAxis":2
-        }
-    ]
-nv.addGraph(function() {
-  var chart = nv.models.multiChart()
-  .margin({top: 30, right: 60, bottom: 50, left: 70})
-  .color(d3.scale.category10().range());
-  
-  chart.xAxis.tickFormat(function(d) {
-              return d3.time.format('%d/%m/%Y')(new Date(d))
-             });
-  chart.yAxis1.tickFormat(d3.format(',.0f'));
-  chart.yAxis2.tickFormat(d3.format(',.1f'));
-  
-  d3.select('#chart1 svg')
-  .datum(testdata1)
-  .transition().duration(500).call(chart);
-  
-  return chart;
-});
-*/
-
-</script>
 
 <script>
    var testdata1 = [
