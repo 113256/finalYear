@@ -3,7 +3,9 @@
 require('../includes/connect.php');
 require('../functions/string.php');
 
-
+	/*
+	downloads all the posters from the poster URLs in the database
+	*/
 	function downloadAllPosters(){
 
 		require("../includes/connect.php");

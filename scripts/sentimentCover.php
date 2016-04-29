@@ -1,4 +1,8 @@
 <?php
+
+	/*
+	generate fake sentiment data for testing
+	*/
 	$dir = new DirectoryIterator(dirname("../sentiment/4got10.php"));
 	foreach ($dir as $fileinfo) {
 	    if (!$fileinfo->isDot()) {
@@ -60,7 +64,7 @@
 
 	    	}
 
-	    	$result = implode("/", $resultArray);
+	    	$result = implode("/", $resultArray); 
 	    	$result.="/";
 
 	    	$filename = "../sentiment/".$name;

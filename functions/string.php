@@ -26,22 +26,23 @@
 		return str_replace(" ", "", $trim);
 	}
 
+	//see if two words match after normalizing them
 	function fuzzy_match($x,$y){
 		return normalize($x)==normalize($y);
 	}
 
+	//if field is null/empty/0/"not available"
+	function IsEmpty($field) {
+		    //code to be executed;
+		    if(empty($field) or str_replace(" ", "", $field)=='N/A' or $field=='0.0' or $field=='0' or $field==' '){
+		    	return true;
+		    } else {
+		    	return false;
+		    }
+		}
 
-		function IsEmpty($field) {
-			    //code to be executed;
-			    if(empty($field) or str_replace(" ", "", $field)=='N/A' or $field=='0.0' or $field=='0' or $field==' '){
-			    	return true;
-			    } else {
-			    	return false;
-			    }
-			}
 
-
-
+	//downloads the poster from the scraped URL to aovid hotlinking
 	function downloadPoster($movieId, $posterUrl){
 
 		//require("includes/connect.php");

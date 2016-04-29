@@ -1,4 +1,14 @@
 <?php 
+
+
+	/*
+	* this function updates the twitter sentiment of each film by going through the moviename table and using the name as a parameter in the 
+	* tweets2csv website which displays all the tweets for that keyword. these are parsed to push each tweet into an array to which is then
+	* used in the sentiment101 API to find the sentiment for each tweet. The words and frequency in each tweet is also written to a text file corresponding
+	* that film that will be used to display a word cloud
+	* @parameters- due to API restrictions the sentiment is updated in 2 batches, if i = 1, the first half of names from movienames table are updated.
+	*/
+
 	//i = 1, first half, i = 2, second half
 	//NOTE- ALSO UPDATES WORD CLOUD
 	function updateSentiment($i){

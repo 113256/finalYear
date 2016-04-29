@@ -1,5 +1,9 @@
 <?php
 
+/*
+this script gets the top searched films using web scraping
+*/
+
 /* gets the data from a URL */
 function get_data($url) {
 	$ch = curl_init();

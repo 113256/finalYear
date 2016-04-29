@@ -1,4 +1,9 @@
 <?php 
+
+	/*
+	this function is called whenever a new film is detected by other funcions. It scrapes information from omdbapi and inserts them into the 
+	database
+	*/
 	function newMovie($title)
 	{	
 		//require("connect.php");

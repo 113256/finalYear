@@ -3,16 +3,15 @@
 $formattedRecentDate="";
 
 
-
+/*
+* gets the most recent films by using the myapifilms API, for attributes it cant find, it passes the name to the OMDB api
+*/
 function getRecent(){
 
 
 
 	require("../includes/connect.php");
 	//require("../functions/string.php");
-
-
-	
 
 	/*
 		find title of each recently released movie then put into omdb

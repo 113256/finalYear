@@ -1,7 +1,7 @@
 <?php
 require('includes/connect.php');
-require('includes/string.php');
-require('includes/generateDataLayer.php');
+require('functions/string.php');
+require('functions/generateDataLayer.php');
 
 $twoDaysAgoDate = new DateTime('-2 day');
 $twoDaysAgoDate= $twoDaysAgoDate->format('Y-m-d ');

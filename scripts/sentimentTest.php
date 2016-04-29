@@ -1,11 +1,12 @@
 <?php 
 
+	/*
+	test the sentiment function
+	*/
 	function updateSentiment(){
 
 		require("../includes/connect.php");
-		require("../includes/string.php");
-
-		
+		require("../functions/string.php");
 
 		$selectQuery = "SELECT movieId FROM moviename WHERE name LIKE '%Star Wars%'";
 		$selectResult = mysqli_query($conn, $selectQuery) or die(mysqli_error($conn));
@@ -17,8 +18,6 @@
 			$movieId = mysql_real_escape_string($row['movieId']);
 			$name = normalizeCaseSen($row['movieId']);
 			//$hashtag = "#".$name;
-
-			 
 
 			$results=array();
 			//rpp = tweetcount (max=  100)

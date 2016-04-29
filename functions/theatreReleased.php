@@ -1,4 +1,9 @@
 <?php
+
+/*
+* gets the latest theatre releases by scraping igoogle.flixter.com 
+* NOTE- igoogle.flixter is no longer live.
+*/
 function getTheatre(){
 
 	require("../includes/connect.php");

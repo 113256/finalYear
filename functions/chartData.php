@@ -35,6 +35,12 @@
 	}
 */
 
+
+	/*
+	* print the chart data string for votes/rating by finding the file corresponding to the imdbID 
+	*@param votesOrRating 0 for votes, 1 for rating
+	*@return the string in this format [ 1136005200000 , 1271000.0] , [ 1138683600000 , 1271000.0], used by the charting library
+	*/
 	function printChartData($votesOrRating, $imdbID){
 
 	$file = file_get_contents("ratings/".$imdbID.".php");
@@ -67,6 +73,7 @@
 	}
 	$dataString = rtrim($dataString, ",");
 	echo $dataString;
+	//return $dataString;
 	}
 
 
@@ -119,6 +126,11 @@
 	//printSentiment(0, "ExMachina");
 
 
+	/*
+	* print the chart data string for sentiment by finding the file corresponding to the name
+	*@param index 0 for positive, 1 for negative, 2 for neutral
+	*@return the string in this format [date,sentiment], used by the charting library
+	*/
 	function printSentiment($index, $name){
 
 	$file = file_get_contents("sentiment/".$name.".txt");
@@ -165,7 +177,9 @@
 	echo $dataString;
 	}
 
-
+	/*
+	returns the word cloud string in the below format by finding the file corresponding to the movie id
+	*/
 	function printWordCloud($normalizedId){
 		/*
 		var words = [

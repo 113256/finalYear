@@ -1,7 +1,6 @@
 <?php
 
-
-//build datalayer string for google tag manager
+//build datalayer
 /*
 //single
 dataLayer = [
@@ -116,16 +115,7 @@ function generateDataLayer($result, $p, $view, $genre, $category, $sort, $search
 
 
 
-/*
-@param chosenResult - the result set
-@param p - metric (rating or sentiment)
-@param view- grid view or list view
-@param genre
-@param searchName- any search term user typed
-@param day - release date
 
-@return the dataLayer string for google tag manager (GTM)
-*/
 function generateDataLayerShow($result, $view, $genre, $searchName,$day){
 	require('includes/connect.php');
 	$dataLayerString = "[{'page':'showsList',";
@@ -179,7 +169,6 @@ function generateDataLayerShow($result, $view, $genre, $searchName,$day){
 
 //for specific movie
 function generateDataLayerMovie($row){
-	require('includes/connect.php');
 	//For each different object, think about what the key data points are that are interesting. For example, a video on Youtube will have an id, a name, an author / producer etc.
 
 	//name

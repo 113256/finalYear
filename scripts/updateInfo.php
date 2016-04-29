@@ -1,8 +1,10 @@
 <?php 
+	
+	//updates the general information of each film in the database
 	function updateMovie()
 	{	set_time_limit(7200);
 		require("../includes/connect.php");
-		require("../includes/string.php");
+		require("../functions/string.php");
 
 
 		$selectQuery = "SELECT * FROM `imdb`";

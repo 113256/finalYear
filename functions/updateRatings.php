@@ -1,5 +1,10 @@
 <?php 
 
+	/*
+	* this function updates the ratings of each film by going through each record of the imdb table. it 
+	* uses the imdbID of each record to find the latest rating using the myapifilms API and 
+	* appends the date and rating to a text file corresponding to the imdb ID
+	*/
 	function updateRating($i){
 		echo $i;
 		require("../includes/connect.php");

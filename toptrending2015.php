@@ -14,7 +14,7 @@ require('includes/head.php');
 <html>
 <?php 
 require('includes/navbar.php');
-require('includes/string.php');
+require('functions/string.php');
 ?>
 
 

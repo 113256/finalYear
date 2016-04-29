@@ -5,9 +5,7 @@ Disallow: /poster
 Disallow: /py
 Disallow: /fonts
 Disallow: /cache
-Disallow: /css
 Disallow: /includes
-Disallow: /js
 Disallow: /ratings
 Disallow: /scheduleScripts
 Disallow: /sentiment

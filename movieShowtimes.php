@@ -5,7 +5,7 @@
 
 	require('functions/newMovie.php');
 
-	require('includes/string.php');
+	require('functions/string.php');
 
 
 	$movie = $_GET['movie'];

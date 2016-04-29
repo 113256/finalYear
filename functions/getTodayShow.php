@@ -1,6 +1,8 @@
 <?php 
 
-
+	/*
+	gets the latest tv shows
+	*/
 	function getShows($date){
 		require("../includes/connect.php");
 

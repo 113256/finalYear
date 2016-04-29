@@ -1,4 +1,10 @@
 <?php
+
+	/*
+	The API showing the ratings may replace a decimal point with a comma, which will ruin the text file
+	containing the ratings as it can no longer be parsed. This script will walk through each file in the
+	ratings folder and convert the commas back to decimal points
+	*/
 	$dir = new DirectoryIterator(dirname("../ratings/tt0005044.php"));
 	foreach ($dir as $fileinfo) {
 	    if (!$fileinfo->isDot()) {

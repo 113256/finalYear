@@ -1,4 +1,6 @@
 <?php
+
+	//removes the last element from each rating file
 	require("../includes/connect.php");
 
 	$selectQuery = "SELECT imdbID FROM imdb";

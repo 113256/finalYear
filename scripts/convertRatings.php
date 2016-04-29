@@ -1,4 +1,6 @@
 <?php
+
+	
 	require("../includes/connect.php");
 
 	$selectQuery = "SELECT imdbID FROM imdb";
